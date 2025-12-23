@@ -1,62 +1,30 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 import { UserRepository } from '../user/user.repository';
-import { User } from './user.schema';
-import { Cron } from '@nestjs/schedule';
-import config from '../config/env.config';
-import { IUser } from './user.interface';
-import { DataAccessService } from 'src/shared/dataAccess/dataAccess.service';
+import { CreateUserInputDto } from "./user.dto";
+import { User } from "./user.schema";
+import { ObjectId } from "mongoose";
 
-// TODO: Remove return await
 @Injectable()
-export class UserService implements OnApplicationBootstrap {
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly dataAccess: DataAccessService,
+export class UserService {
+    constructor(
+    private readonly usersRepository: UserRepository,
   ) {}
 
-  onApplicationBootstrap() {
-    void this.updateAll();
-  }
+ async createUser(user: CreateUserInputDto): Promise<User> {
+    return this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user})
+ } 
 
-  // Finds all and insert to the DB
-  async updateAll(): Promise<IUser[]> {
-    const updatedData = await this.dataAccess.getData();
+ async findUserByIdentityCard(identityCard: string): Promise<User> {
+    return this.usersRepository.findUserByIdentityCard(identityCard);
+ }
+ 
+ // TO-DO : ask about the fullname in the url path
 
-    if (updatedData?.length && updatedData.length > 1) {
-      try {
-        await this.userRepository.insetMany(updatedData as IUser[]);
-        await this.userRepository.deleteAll();
-      } catch (err: any) {
-        console.log(err.message);
-      }
-      return updatedData;
-    }
+ async findAllUsersInRange(pageNum: number, limit: number): Promise<User[]> {
+    return this.usersRepository.findAllUsersInRange((pageNum -1 ) * limit, limit)
+ }
 
-    return [];
-  }
-
-  findAllDB(): Promise<User[]> {
-    return this.userRepository.findAll();
-  }
-
-  findByPersonalNumber(personalNumber: string): Promise<User> {
-    return this.userRepository.findByPersonalNumber(personalNumber);
-  }
-
-  findByIdentityCard(identityCard: string): Promise<User> {
-    return this.userRepository.findByIdentityCard(identityCard);
-  }
-
-  findByUser(user: string): Promise<User> {
-    return this.userRepository.findByUser(user.split('@')[0]);
-  }
-
-  @Cron(config.service.updateCron, {
-    timeZone: 'Asia/Jerusalem',
-  })
-  async updateAllCron() {
-    console.log('Cron starting, Getting Data');
-    const data = await this.updateAll();
-    console.log(`Got ${data.length} records`);
-  }
+ async findUserByAccount(accountId: ObjectId): Promise<User> {
+    return this.usersRepository.findUserByAccount(accountId);
+ }
 }
