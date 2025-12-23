@@ -39,13 +39,13 @@ export class UserRepository {
   }
 
     findUsersWithSource(source: string) {
-    this.userModel
+    return this.userModel
       .find({accounts: {source: source}})
       .lean();
   }
 
   // finds how many pages the users take
-  findUsersPageNum() {
-    return this.userModel.countDocuments();
+  async findUsersPageNum(limit: number) {
+    return Math.ceil((await this.userModel.countDocuments()) / limit);
   }
 }

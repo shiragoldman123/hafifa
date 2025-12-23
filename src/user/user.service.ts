@@ -10,21 +10,30 @@ export class UserService {
     private readonly usersRepository: UserRepository,
   ) {}
 
- async createUser(user: CreateUserInputDto): Promise<User> {
+  createUser(user: CreateUserInputDto): Promise<User> {
     return this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user})
  } 
 
- async findUserByIdentityCard(identityCard: string): Promise<User> {
+  findUserByIdentityCard(identityCard: string): Promise<User> {
     return this.usersRepository.findUserByIdentityCard(identityCard);
  }
  
- // TO-DO : ask about the fullname in the url path
-
- async findAllUsersInRange(pageNum: number, limit: number): Promise<User[]> {
+  findUserByFullName(fullName: string) : Promise<User> {
+    return this.usersRepository.findUserByFullName(fullName);
+ }
+  findAllUsersInRange(pageNum: number, limit: number): Promise<User[]> {
     return this.usersRepository.findAllUsersInRange((pageNum -1 ) * limit, limit)
  }
 
- async findUserByAccount(accountId: ObjectId): Promise<User> {
+  findUserByAccount(accountId: ObjectId): Promise<User> {
     return this.usersRepository.findUserByAccount(accountId);
+ }
+
+  findUsersWithSource(source: string): Promise<User[]> {
+    return this.usersRepository.findUsersWithSource(source)
+ }
+
+  findUsersPageNum(limit: number) : Promise<number> {
+    return this.usersRepository.findUsersPageNum(limit);
  }
 }
