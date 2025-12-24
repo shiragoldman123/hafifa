@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User } from './user.schema';
 import { CreateUserDto } from './user.dto';
 
@@ -31,10 +31,12 @@ export class UserRepository {
     return this.userModel.find().populate('accounts').skip(skip).limit(limit).lean();
   }
 
-  findUserByAccount(accountId: ObjectId) {
+  findUserByAccount(accountId: string) {
+        const objId = new Types.ObjectId(accountId);
+    console.log('Searching for account:', objId, typeof objId);
    return this.userModel
-      .findOne({ accounts: accountId })
-      .orFail(new NotFoundException(`User not found for account ${accountId}`))
+      .findOne({ accounts: objId })
+      .orFail(new NotFoundException(`User not found for account ${objId}`))
       .lean();
   }
 

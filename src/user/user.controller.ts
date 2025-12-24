@@ -1,13 +1,12 @@
 import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserInputDto } from "./user.dto";
-import { ObjectId } from "mongoose";
 
-@Controller('api/users')
+@Controller('/users')
 export class UserController {
     constructor(private readonly usersService: UserService) {}
 
-    @Post()
+    @Post('')
     createUser(@Body() user: CreateUserInputDto) {
         return this.usersService.createUser(user);
     }
@@ -28,7 +27,7 @@ export class UserController {
     }
 
     @Get('/account/:accountId')
-    findUserByAccount(@Param('accountId') accountId: ObjectId) {
+    findUserByAccount(@Param('accountId') accountId: string) {
         return this.usersService.findUserByAccount(accountId);
     }
 
@@ -36,6 +35,7 @@ export class UserController {
     findUsersWithSource(@Param('source') source: string) {
         return this.usersService.findUsersWithSource(source);
     }
+
 
     @Get('/pageAmount/:limit') 
     findUsersPageNum(@Param('limit') limit: number) {

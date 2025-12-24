@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Date, Document, ObjectId } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import config from '../config/env.config';
 import { Account } from 'src/account/account.schema';
 
@@ -28,7 +28,7 @@ export class User {
   @Prop({ required: true })
   gender: string;
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Account', required: false })
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: Account.name, required: false })
   accounts: Account[];
 }
 

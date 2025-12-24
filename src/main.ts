@@ -3,26 +3,12 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import logger from 'morgan';
 import { AppModule } from './app.module';
 import envConfig from './config/env.config';
-import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   console.log('Creating app with config:', envConfig);
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
   app.use(logger('dev'));
-
-  app.connectMicroservice({
-    transport: Transport.RMQ,
-    options: {
-      urls: [envConfig.rabbit.host],
-      queue: envConfig.rabbit.queueNameConsumer,
-      noAck: false,
-      queueOptions: {
-        prefetchCount: envConfig.rabbit.prefetchCount,
-        durable: true,
-      },
-    },
-  });
 
   const config = new DocumentBuilder()
     .setTitle(`${envConfig.metaData.systemName + envConfig.metaData.serviceName} API`)

@@ -6,7 +6,7 @@ import { User } from 'src/user/user.schema';
 export type AccountDocument = Account & Document;
 
 @Schema({
-  collection: config.mongo.usersCollectionName,
+  collection: config.mongo.accountsCollectionName,
   versionKey: false,
 })
 export class Account {
@@ -19,7 +19,7 @@ export class Account {
     @Prop()
     email: string
 
-    @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User' })
+    @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Users' })
     user: User
 }
 

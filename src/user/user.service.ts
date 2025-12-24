@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { UserRepository } from '../user/user.repository';
 import { CreateUserInputDto } from "./user.dto";
 import { User } from "./user.schema";
-import { ObjectId } from "mongoose";
 
 @Injectable()
 export class UserService {
@@ -25,7 +24,7 @@ export class UserService {
     return this.usersRepository.findAllUsersInRange((pageNum -1 ) * limit, limit)
  }
 
-  findUserByAccount(accountId: ObjectId): Promise<User> {
+  findUserByAccount(accountId: string): Promise<User> {
     return this.usersRepository.findUserByAccount(accountId);
  }
 
