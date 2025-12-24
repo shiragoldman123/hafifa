@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, ObjectId, Types } from 'mongoose';
 import { User } from './user.schema';
 import { CreateUserDto } from './user.dto';
 
@@ -32,22 +32,35 @@ export class UserRepository {
   }
 
   findUserByAccount(accountId: string) {
-        const objId = new Types.ObjectId(accountId);
+    const objId = new Types.ObjectId(accountId);
     console.log('Searching for account:', objId, typeof objId);
-   return this.userModel
+    return this.userModel
       .findOne({ accounts: objId })
       .orFail(new NotFoundException(`User not found for account ${objId}`))
       .lean();
   }
 
-    findUsersWithSource(source: string) {
-    return this.userModel
-      .find({accounts: {source: source}})
-      .lean();
+  findUsersWithSource(source: string) {
+    return this.userModel.find({ accounts: { source: source } }).lean();
   }
 
   // finds how many pages the users take
   async findUsersPageNum(limit: number) {
     return Math.ceil((await this.userModel.countDocuments()) / limit);
+  }
+
+  async connectAccountToUser(accountId: ObjectId, userId: ObjectId) {
+    const user = await this.userModel.findById(userId).orFail(new NotFoundException(`User not found with id ${userId}`));
+
+    user.accounts.push(accountId);
+
+    return user.save();
+  }
+
+  async disconnectAccountToUser(accountId: ObjectId, userId: ObjectId) {
+    const result = await this.userModel.updateOne({ _id: userId }, { $pull: { accounts: accountId } });
+    if (result.matchedCount === 0) {
+      throw new NotFoundException(`User not found with id ${userId}`);
+    }
   }
 }

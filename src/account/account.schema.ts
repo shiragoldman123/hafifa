@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document, ObjectId } from 'mongoose';
 import config from '../config/env.config';
 import { User } from 'src/user/user.schema';
 
@@ -20,7 +20,7 @@ export class Account {
     email: string
 
     @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Users' })
-    user: User
+    user: User | ObjectId
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

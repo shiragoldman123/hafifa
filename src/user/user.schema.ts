@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document, ObjectId } from 'mongoose';
 import config from '../config/env.config';
 import { Account } from 'src/account/account.schema';
 
@@ -29,7 +29,7 @@ export class User {
   gender: string;
 
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: Account.name, required: false })
-  accounts: Account[];
+  accounts: (ObjectId | Account)[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
