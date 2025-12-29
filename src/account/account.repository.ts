@@ -3,13 +3,13 @@ import { Account } from './account.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { User } from 'src/user/user.schema';
-import { createdAccount } from './account.dto';
+import { CreatedAccount } from './account.dto';
 
 @Injectable()
 export class AccountsRepository {
   constructor(@InjectModel(Account.name) private readonly accountModel: Model<Account>) {}
 
-  createAccount(accountDto: createdAccount) {
+  createAccount(accountDto: CreatedAccount) {
     const createdAccount = new this.accountModel(accountDto);
     return createdAccount.save();
   }

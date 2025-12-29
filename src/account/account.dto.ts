@@ -1,4 +1,4 @@
-export class createdAccount {
+export class CreatedAccount {
     identifier: string;
     source: string;
     email: string;

@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
 import { AccountService } from "./account.service";
-import { createdAccount } from "./account.dto";
+import { CreatedAccount } from "./account.dto";
 
 @Controller('/accounts') 
 export class AccountController {
     constructor(private readonly accountService: AccountService){}
 
     @Post('')
-    createAccount(@Body() account: createdAccount) {
+    createAccount(@Body() account: CreatedAccount) {
         return this.accountService.createAccount(account)
     }
 

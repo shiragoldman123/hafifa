@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { AccountsRepository } from "./account.repository";
-import { createdAccount } from "./account.dto";
+import { CreatedAccount } from "./account.dto";
 import { Types } from "mongoose";
 import { Account } from "./account.schema";
 
@@ -8,7 +8,7 @@ import { Account } from "./account.schema";
 export class AccountService {
     constructor(private readonly accountsRepository: AccountsRepository){}
 
-    createAccount(accountDto: createdAccount): Promise<Account> {
+    createAccount(accountDto: CreatedAccount): Promise<Account> {
         return this.accountsRepository.createAccount(accountDto);
     }
 
