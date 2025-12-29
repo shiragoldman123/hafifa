@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { User } from './user.schema';
 import { CreateUserDto } from './user.dto';
 
@@ -31,17 +31,11 @@ export class UserRepository {
     return this.userModel.find().populate('accounts').skip(skip).limit(limit).lean();
   }
 
-  findUserByAccount(accountId: string) {
-    const objId = new Types.ObjectId(accountId);
-    console.log('Searching for account:', objId, typeof objId);
+  findUserByAccount(accountId: Types.ObjectId) {
     return this.userModel
-      .findOne({ accounts: objId })
-      .orFail(new NotFoundException(`User not found for account ${objId}`))
+      .findOne({ accounts: accountId })
+      .orFail(new NotFoundException(`User not found for account ${accountId}`))
       .lean();
-  }
-
-  findUsersWithSource(source: string) {
-    return this.userModel.find({ accounts: { source: source } }).lean();
   }
 
   // finds how many pages the users take
@@ -49,18 +43,27 @@ export class UserRepository {
     return Math.ceil((await this.userModel.countDocuments()) / limit);
   }
 
-  async connectAccountToUser(accountId: ObjectId, userId: ObjectId) {
-    const user = await this.userModel.findById(userId).orFail(new NotFoundException(`User not found with id ${userId}`));
+  async connectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId, session: ClientSession) {
+    const result = await this.userModel.updateOne(
+    { _id: userId },
+    { $addToSet: { accounts: accountId } }, 
+    { session },
+  );
 
-    user.accounts.push(accountId);
-
-    return user.save();
+  if (result.matchedCount === 0) {
+    throw new NotFoundException(`User not found with id ${userId}`);
+  }
   }
 
-  async disconnectAccountToUser(accountId: ObjectId, userId: ObjectId) {
-    const result = await this.userModel.updateOne({ _id: userId }, { $pull: { accounts: accountId } });
-    if (result.matchedCount === 0) {
-      throw new NotFoundException(`User not found with id ${userId}`);
-    }
+  async disconnectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId, session: ClientSession) {
+     const result = await this.userModel.updateOne(
+    { _id: userId },
+    { $pull: { accounts: accountId } },
+    { session },
+  );
+
+  if (result.matchedCount === 0) {
+    throw new NotFoundException(`User not found with id ${userId}`);
+  }
   }
 }
