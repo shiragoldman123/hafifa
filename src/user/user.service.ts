@@ -42,7 +42,7 @@ export class UserService {
     return this.usersRepository.findUsersPageNum(limit);
  }
 
- async connectAccountToUser(accountId: string, userId: string) {
+ async connect(accountId: string, userId: string) {
   const session = await this.connection.startSession();
 
   try {

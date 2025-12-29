@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserInputDto } from "./user.dto";
 
@@ -40,5 +40,15 @@ export class UserController {
     @Get('/pageAmount/:limit') 
     findUsersPageNum(@Param('limit') limit: number) {
         return this.usersService.findUsersPageNum(limit);
+    }
+
+    @Patch('/connect/account/:accountId/user/:userId')
+    connect(@Param('accountId') accountId: string, @Param('userId') userId: string) {
+        return this.usersService.connect(accountId, userId);
+    }
+
+    @Delete('/disconnect/account/:accountId/user/:userId')
+    diconnect(@Param('accountId') accountId: string, @Param('userId') userId: string) {
+        return this.usersService.disconnect(accountId, userId);
     }
 }
