@@ -59,7 +59,7 @@ export class AccountsRepository {
         $group: { _id: '$user' },
       },
       {
-        $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'userDetails' },
+        $lookup: { from: 'Users', localField: '_id', foreignField: '_id', as: 'userDetails' },
       },
       {
         $unwind: '$userDetails',
