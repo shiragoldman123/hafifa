@@ -53,36 +53,47 @@ export class UserService {
  }
 
  async connect(accountId: string, userId: string) {
-    this.accountRepository.findAccountById(new Types.ObjectId(accountId));
-    this.usersRepository.findUserById(new Types.ObjectId(userId));
+  const accId = new Types.ObjectId(accountId);
+  const usrId = new Types.ObjectId(userId);
+
+  await Promise.all([
+    this.accountRepository.findAccountById(accId),
+    this.usersRepository.findUserById(usrId),
+  ]);
 
   try {
-    await this.usersRepository.connectAccountToUser(
-     new Types.ObjectId(accountId), 
-     new Types.ObjectId(userId), 
-    ); 
-    await this.accountRepository.connectUserToAccount(
-     new Types.ObjectId(accountId), 
-     new Types.ObjectId(userId), 
-    )
-  } catch (error) {
-    this.disconnect(accountId, userId);
+    await this.usersRepository.connectAccountToUser(accId, usrId);
+    await this.accountRepository.connectUserToAccount(accId, usrId);
+
+    return { ok: true };
+  } catch (err) {
+    try {
+      await Promise.allSettled([
+        this.usersRepository.disconnectAccountToUser(accId, usrId),
+        this.accountRepository.disconnectUserToAccount(accId),
+      ]);
+    } catch (_) {
+    }
+    throw err;
   }
 }
 
 async disconnect(accountId: string, userId: string) {
-     this.accountRepository.findAccountById(new Types.ObjectId(accountId));
-    this.usersRepository.findUserById(new Types.ObjectId(userId));
+  const accId = new Types.ObjectId(accountId);
+  const usrId = new Types.ObjectId(userId);
+
+  await Promise.all([
+    this.accountRepository.findAccountById(accId),
+    this.usersRepository.findUserById(usrId),
+  ]);
+
   try {
-    await this.usersRepository.disconnectAccountToUser(
-     new Types.ObjectId(accountId), 
-     new Types.ObjectId(userId), 
-    ); 
-    await this.accountRepository.diconnectUserToAccount(
-     new Types.ObjectId(accountId), 
-    )
-  } catch (error) {
-    this.connect(accountId, userId);
+    await this.usersRepository.disconnectAccountToUser(accId, usrId);
+    await this.accountRepository.disconnectUserToAccount(accId);
+    return { ok: true };
+  } catch (err) {
+    throw err;
   }
-  }
+}
+
 }

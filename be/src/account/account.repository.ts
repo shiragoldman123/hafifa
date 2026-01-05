@@ -25,7 +25,7 @@ export class AccountsRepository {
   }
   }
 
-  async diconnectUserToAccount(accountId: Types.ObjectId) {
+  async disconnectUserToAccount(accountId: Types.ObjectId) {
      const result = await this.accountModel.updateOne(
     { _id: accountId },
     { $set: { user: null } },
@@ -50,7 +50,7 @@ export class AccountsRepository {
 
     findAccountById(accountId: Types.ObjectId) {
       return this.accountModel
-      .findById({ accountId })
+      .findById( accountId )
       .orFail(new NotFoundException(`couldnt find account with id: ${accountId}`))
       .lean();
   } 

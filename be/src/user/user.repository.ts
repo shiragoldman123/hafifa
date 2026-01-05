@@ -72,8 +72,9 @@ export class UserRepository {
   }
 
   findUserById(userId: Types.ObjectId) {
+    console.log("got here")
       return this.userModel
-      .findById({ userId })
+      .findById( userId )
       .orFail(new NotFoundException(`couldnt find user with id: ${userId}`))
       .lean();
   } 
