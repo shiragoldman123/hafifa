@@ -10,14 +10,14 @@ return (
     <Navbar />
     <Box
       sx={{
-        minHeight: "calc(100vh - 64px)", // assumes Navbar ~64px (MUI default)
+        minHeight: "calc(100vh - 64px)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         px: 2,
       }}
     >
-      <Box sx={{ width: "min(1100px, 100%)" }}>
+      <Box sx={{ width: "90%" }}>
         <UserDisplay />
       </Box>
     </Box>

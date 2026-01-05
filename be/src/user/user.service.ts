@@ -2,8 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { UserRepository } from '../user/user.repository';
 import { CreateUserInputDto } from "./user.dto";
 import { User } from "./user.schema";
-import { Connection, Types } from "mongoose";
-import { InjectConnection } from "@nestjs/mongoose";
+import { Types } from "mongoose";
 import { AccountsRepository } from "src/account/account.repository";
 
 @Injectable()
@@ -11,7 +10,6 @@ export class UserService {
     constructor(
     private readonly usersRepository: UserRepository,
     private readonly accountRepository: AccountsRepository,
-    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   createUser(user: CreateUserInputDto): Promise<User> {
@@ -25,9 +23,25 @@ export class UserService {
   findUserByFullName(fullName: string) : Promise<User> {
     return this.usersRepository.findUserByFullName(fullName);
  }
-  findAllUsersInRange(pageNum: number, limit: number): Promise<User[]> {
-    return this.usersRepository.findAllUsersInRange((pageNum -1 ) * limit, limit)
- }
+
+  async findUsersPaginated(page: number, limit: number) {
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.max(1, Math.min(limit, 100)); 
+  const skip = (safePage - 1) * safeLimit;
+
+  const { data, total } = await this.usersRepository.findUsersPaginated(skip, safeLimit);
+
+  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+
+  return {
+    data,
+    page: safePage,
+    limit: safeLimit,
+    total,
+    totalPages,
+  };
+}
+
 
   findUserByAccount(accountId: string): Promise<User> {
     const objId = new Types.ObjectId(accountId);
@@ -38,50 +52,37 @@ export class UserService {
     return this.accountRepository.findUsersBySource(source)
  }
 
-  findUsersPageNum(limit: number) : Promise<number> {
-    return this.usersRepository.findUsersPageNum(limit);
- }
-
  async connect(accountId: string, userId: string) {
-  const session = await this.connection.startSession();
+    this.accountRepository.findAccountById(new Types.ObjectId(accountId));
+    this.usersRepository.findUserById(new Types.ObjectId(userId));
 
   try {
-    await session.withTransaction(async () => {
-      await this.usersRepository.connectAccountToUser(
-      new Types.ObjectId(accountId), 
-      new Types.ObjectId(userId), 
-      session,
-      );
-
-      await this.accountRepository.connectUserToAccount(
-      new Types.ObjectId(accountId), 
-      new Types.ObjectId(userId), 
-      session,
-      );
-    });
-  } finally {
-    session.endSession();
+    await this.usersRepository.connectAccountToUser(
+     new Types.ObjectId(accountId), 
+     new Types.ObjectId(userId), 
+    ); 
+    await this.accountRepository.connectUserToAccount(
+     new Types.ObjectId(accountId), 
+     new Types.ObjectId(userId), 
+    )
+  } catch (error) {
+    this.disconnect(accountId, userId);
   }
 }
 
 async disconnect(accountId: string, userId: string) {
-    const session = await this.connection.startSession();
-
-    try {
-      await session.withTransaction(async () => {
-        await this.usersRepository.disconnectAccountToUser(
-          new Types.ObjectId(accountId),
-          new Types.ObjectId(userId),
-          session,
-        );
-
-        await this.accountRepository.diconnectUserToAccount(
-          new Types.ObjectId(accountId),
-          session,
-        );
-      });
-    } finally {
-      session.endSession();
-    }
+     this.accountRepository.findAccountById(new Types.ObjectId(accountId));
+    this.usersRepository.findUserById(new Types.ObjectId(userId));
+  try {
+    await this.usersRepository.disconnectAccountToUser(
+     new Types.ObjectId(accountId), 
+     new Types.ObjectId(userId), 
+    ); 
+    await this.accountRepository.diconnectUserToAccount(
+     new Types.ObjectId(accountId), 
+    )
+  } catch (error) {
+    this.connect(accountId, userId);
+  }
   }
 }

@@ -1,89 +1,203 @@
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import Paper from "@mui/material/Paper";
+import { useMemo, useState } from "react";
 import Box from "@mui/material/Box";
-import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
+import Alert from "@mui/material/Alert";
 import TextField from "@mui/material/TextField";
 
-const columns: GridColDef[] = [
-  { field: "firstName", headerName: "First name", width: 130 },
-  { field: "lastName", headerName: "Last name", width: 130 },
-  {
-    field: "birthDate",
-    headerName: "Birth Date",
-    type: "date",
-    width: 130,
-  },
-  {
-    field: "identityNum",
-    headerName: "indentity num",
-    width: 130,
-  },
-  {
-    field: "gender",
-    headerName: "gender",
-    width: 130,
-  },
-];
+import Card from "@mui/material/Card";
+import CardHeader from "@mui/material/CardHeader";
+import CardContent from "@mui/material/CardContent";
+import IconButton from "@mui/material/IconButton";
+import Collapse from "@mui/material/Collapse";
+import Typography from "@mui/material/Typography";
+import Divider from "@mui/material/Divider";
+import Stack from "@mui/material/Stack";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 
-// TO-DO- change it to api request
-const rows = [
-  { id: 1, lastName: "Snow", firstName: "Jon", age: 35 },
-  { id: 2, lastName: "Lannister", firstName: "Cersei", age: 42 },
-  { id: 3, lastName: "Lannister", firstName: "Jaime", age: 45 },
-  { id: 4, lastName: "Stark", firstName: "Arya", age: 16 },
-  { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-  { id: 6, lastName: "Melisandre", firstName: null, age: 150 },
-  { id: 7, lastName: "Clifford", firstName: "Ferrara", age: 44 },
-  { id: 8, lastName: "Frances", firstName: "Rossini", age: 36 },
-  { id: 9, lastName: "Roxie", firstName: "Harvey", age: 65 },
-];
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
-const paginationModel = { page: 0, pageSize: 5 };
+import { useUsers } from "../../api/users/user.hooks";
+import { PopulatedUser } from "../../types/user.types";
+import MenuItem from "@mui/material/MenuItem";
+
+function AccountsSection({ accounts }: { accounts: any[] }) {
+  if (!accounts || accounts.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
+        No accounts
+      </Typography>
+    );
+  }
+
+  return (
+    <Stack spacing={1} sx={{ pt: 1 }}>
+      {accounts.map((acc, idx) => (
+        <Box key={acc._id ?? idx}>
+          <Typography variant="body2">
+            <b>Source:</b> {acc.source ?? "-"}{" "}
+            <b style={{ marginLeft: 8 }}>Identifier:</b> {acc.identifier ?? "-"}
+          </Typography>
+          {acc.email && (
+            <Typography variant="body2">
+              <b>Email:</b> {acc.email}
+            </Typography>
+          )}
+          {idx < accounts.length - 1 && <Divider sx={{ mt: 1 }} />}
+        </Box>
+      ))}
+    </Stack>
+  );
+}
 
 export default function UserDisplay() {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const apiParams = useMemo(() => ({ page, limit }), [page, limit]);
+  const { data, isPending, isFetching, isError, error } = useUsers(apiParams);
+
+  const users: PopulatedUser[] = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
+
+  const toggle = (id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
   return (
-  <Box
-    sx={{
-      width: "100%",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-    }}
-  >
     <Box
       sx={{
+        width: "100%",
         display: "flex",
-        gap: 8,
+        flexDirection: "column",
         alignItems: "center",
-        mb: 5,
       }}
     >
-      <TextField
-        select
-        label="Search By"
-        size="small"
-        defaultValue=""
-        sx={{ minWidth: 140 }}
-      >
-        <MenuItem value="fullName">Full Name</MenuItem>
-        <MenuItem value="identityCard">Identity Number</MenuItem>
-        <MenuItem value="account">Account</MenuItem>
-        <MenuItem value="source">Source</MenuItem>
-      </TextField>
+      <Box sx={{ display: "flex", gap: 15, alignItems: "center", mb: 3 }}>
+        <TextField
+          select
+          label="Search By"
+          size="small"
+          defaultValue=""
+          sx={{ minWidth: 180 }}
+        />
+        <TextField label="Input" size="small" sx={{ minWidth: 160 }} />
+      </Box>
 
-      <TextField label="Input" size="small" />
+      <Paper sx={{ width: "80%", p: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Button
+              variant="outlined"
+              disabled={page <= 1 || isFetching}
+              onClick={() => {
+                setExpandedId(null);
+                setPage((p) => Math.max(1, p - 1));
+              }}
+            >
+              Prev
+            </Button>
+
+            <Typography variant="body2">
+              Page {page} / {totalPages} {isFetching ? "(Updating…)" : ""}
+            </Typography>
+
+            <Button
+              variant="outlined"
+              disabled={page >= totalPages || isFetching}
+              onClick={() => {
+                setExpandedId(null);
+                setPage((p) => Math.min(totalPages, p + 1));
+              }}
+            >
+              Next
+            </Button>
+          </Stack>
+
+          <TextField
+            select
+            label="Page size"
+            size="small"
+            value={limit}
+            onChange={(e) => {
+              setExpandedId(null);
+              setPage(1);
+              setLimit(Number(e.target.value));
+            }}
+            sx={{ width: 140 }}
+          >
+            <MenuItem value={5}>5</MenuItem>
+            <MenuItem value={10}>10</MenuItem>
+            <MenuItem value={25}>25</MenuItem>
+          </TextField>
+        </Box>
+
+        {isError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error?.message ?? "Failed to load users"}
+          </Alert>
+        )}
+
+        {isPending ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Stack spacing={2}>
+            {users.map((u) => {
+              const id = String(u._id);
+              const isOpen = expandedId === id;
+
+              const birth = u.birthDate
+                ? new Date(u.birthDate).toLocaleDateString()
+                : "-";
+
+              return (
+                <Card key={id} variant="outlined">
+                  <CardHeader
+                    title={`${u.firstName} ${u.lastName}`}
+                    subheader={`ID: ${u.identityCard} • Birth: ${birth} • Gender: ${u.gender}`}
+                    action={
+                      <IconButton
+                        onClick={() => toggle(id)}
+                        aria-label={isOpen ? "Collapse" : "Expand"}
+                      >
+                        {isOpen ? (
+                          <KeyboardArrowUpIcon />
+                        ) : (
+                          <KeyboardArrowDownIcon />
+                        )}
+                      </IconButton>
+                    }
+                  />
+                  <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                    <CardContent>
+                      <Typography variant="subtitle2">Accounts</Typography>
+                      <AccountsSection accounts={(u as any).accounts ?? []} />
+                    </CardContent>
+                  </Collapse>
+                </Card>
+              );
+            })}
+
+            {users.length === 0 && !isError && (
+              <Typography variant="body2" color="text.secondary">
+                No users found.
+              </Typography>
+            )}
+          </Stack>
+        )}
+      </Paper>
     </Box>
-
-    <Paper sx={{ height: 400, width: "80%" }}>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        initialState={{ pagination: { paginationModel } }}
-        pageSizeOptions={[5, 10]}
-        sx={{ border: 0 }}
-      />
-    </Paper>
-  </Box>
-);
-
+  );
 }

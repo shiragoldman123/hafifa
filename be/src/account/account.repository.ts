@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Account } from './account.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Types } from 'mongoose';
+import {  Model, Types } from 'mongoose';
 import { User } from 'src/user/user.schema';
 import { CreateAccountDto } from './account.dto';
 
@@ -14,11 +14,10 @@ export class AccountsRepository {
     return createdAccount.save();
   }
 
-  async connectUserToAccount(accountId: Types.ObjectId, userId: Types.ObjectId, session: ClientSession) {
+  async connectUserToAccount(accountId: Types.ObjectId, userId: Types.ObjectId) {
     const result = await this.accountModel.updateOne(
     { _id: accountId },
     { $set: { user: userId } },
-    { session },
   );
 
   if (result.matchedCount === 0) {
@@ -26,11 +25,10 @@ export class AccountsRepository {
   }
   }
 
-  async diconnectUserToAccount(accountId: Types.ObjectId, session: ClientSession) {
+  async diconnectUserToAccount(accountId: Types.ObjectId) {
      const result = await this.accountModel.updateOne(
     { _id: accountId },
     { $set: { user: null } },
-    { session },
   );
 
   if (result.matchedCount === 0) {
@@ -49,6 +47,13 @@ export class AccountsRepository {
   findAllAcountsFromSource(source: string) {
     return this.accountModel.find({ source: source }).lean();
   }
+
+    findAccountById(accountId: Types.ObjectId) {
+      return this.accountModel
+      .findById({ accountId })
+      .orFail(new NotFoundException(`couldnt find account with id: ${accountId}`))
+      .lean();
+  } 
 
   findUsersBySource(source: string): Promise<User[]> {
     return this.accountModel.aggregate([

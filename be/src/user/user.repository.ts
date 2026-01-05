@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User } from './user.schema';
 import { CreateUserDto } from './user.dto';
 
@@ -27,9 +27,20 @@ export class UserRepository {
       .lean();
   }
 
-  findAllUsersInRange(skip: number, limit: number) {
-    return this.userModel.find().populate('accounts').skip(skip).limit(limit).lean();
-  }
+  async findUsersPaginated(skip: number, limit: number) {
+  const [data, total] = await Promise.all([
+    this.userModel
+      .find()
+      .populate("accounts")
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    this.userModel.countDocuments(),
+  ]);
+
+  return { data, total };
+}
+
 
   findUserByAccount(accountId: Types.ObjectId) {
     return this.userModel
@@ -38,16 +49,10 @@ export class UserRepository {
       .lean();
   }
 
-  // finds how many pages the users take
-  async findUsersPageNum(limit: number) {
-    return Math.ceil((await this.userModel.countDocuments()) / limit);
-  }
-
-  async connectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId, session: ClientSession) {
+  async connectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId) {
     const result = await this.userModel.updateOne(
     { _id: userId },
     { $addToSet: { accounts: accountId } }, 
-    { session },
   );
 
   if (result.matchedCount === 0) {
@@ -55,15 +60,21 @@ export class UserRepository {
   }
   }
 
-  async disconnectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId, session: ClientSession) {
+  async disconnectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId) {
      const result = await this.userModel.updateOne(
     { _id: userId },
     { $pull: { accounts: accountId } },
-    { session },
   );
 
   if (result.matchedCount === 0) {
     throw new NotFoundException(`User not found with id ${userId}`);
   }
   }
+
+  findUserById(userId: Types.ObjectId) {
+      return this.userModel
+      .findById({ userId })
+      .orFail(new NotFoundException(`couldnt find user with id: ${userId}`))
+      .lean();
+  } 
 }

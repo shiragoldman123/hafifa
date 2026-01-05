@@ -9,6 +9,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
   app.use(logger('dev'));
+  app.enableCors({
+    origin: "http://localhost:5173"
+  })
 
   const config = new DocumentBuilder()
     .setTitle(`${envConfig.metaData.systemName + envConfig.metaData.serviceName} API`)

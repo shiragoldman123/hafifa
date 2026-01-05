@@ -1,0 +1,44 @@
+import { Paginated, PopulatedUser, User } from "../../types/user.types";
+import { apiRequest } from "../http";
+
+export function getUsers(params: { page: number; limit: number; search?: string }) {
+  return apiRequest<Paginated<PopulatedUser>>({
+    method: "GET",
+    url: "/api/users",
+    params: {
+      page: params.page,
+      limit: params.limit,
+      ...(params.search ? { search: params.search } : {}),
+    },
+  });
+}
+
+// export function getUserById(id: string) {
+//   return apiRequest<User>({
+//     method: "GET",
+//     url: `/api/users/${id}`,
+//   });
+// }
+
+// export function createUser(input: CreateUserInput) {
+//   return apiRequest<User>({
+//     method: "POST",
+//     url: "/api/users",
+//     data: input,
+//   });
+// }
+
+// export function updateUser(id: string, input: UpdateUserInput) {
+//   return apiRequest<User>({
+//     method: "PATCH",
+//     url: `/api/users/${id}`,
+//     data: input,
+//   });
+// }
+
+// export function deleteUser(id: string) {
+//   return apiRequest<{ success: true }>({
+//     method: "DELETE",
+//     url: `/api/users/${id}`,
+//   });
+// }

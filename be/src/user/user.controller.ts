@@ -1,54 +1,48 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
-import { UserService } from "./user.service";
-import { CreateUserInputDto } from "./user.dto";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { UserService } from './user.service';
+import { CreateUserInputDto } from './user.dto';
 
 @Controller('/users')
 export class UserController {
-    constructor(private readonly usersService: UserService) {}
+  constructor(private readonly usersService: UserService) {}
 
-    @Post('')
-    createUser(@Body() user: CreateUserInputDto) {
-        return this.usersService.createUser(user);
-    }
+  @Post('')
+  createUser(@Body() user: CreateUserInputDto) {
+    return this.usersService.createUser(user);
+  }
 
-    @Get('/id/:id')
-    findUserByIdentityCard(@Param('id') identityCard: string) {
-        return this.usersService.findUserByIdentityCard(identityCard);
-    }
+  @Get('/id/:id')
+  findUserByIdentityCard(@Param('id') identityCard: string) {
+    return this.usersService.findUserByIdentityCard(identityCard);
+  }
 
-    @Get('/fullName/:fullName')
-    findUserByFullName(@Param('fullName') fullName: string) {
-        return this.usersService.findUserByFullName(fullName);
-    }
+  @Get('/fullName/:fullName')
+  findUserByFullName(@Param('fullName') fullName: string) {
+    return this.usersService.findUserByFullName(fullName);
+  }
 
-    @Get()
-    findAllUsersInRange(@Query('page') page: number, @Query('limit') limit: number) {
-        return this.usersService.findAllUsersInRange(page, limit);
-    }
+  @Get()
+  async getUsers(@Query('page') page = '1', @Query('limit') limit = '10') {
+    return this.usersService.findUsersPaginated(Number(page), Number(limit));
+  }
 
-    @Get('/account/:accountId')
-    findUserByAccount(@Param('accountId') accountId: string) {
-        return this.usersService.findUserByAccount(accountId);
-    }
+  @Get('/account/:accountId')
+  findUserByAccount(@Param('accountId') accountId: string) {
+    return this.usersService.findUserByAccount(accountId);
+  }
 
-    @Get('/accounts/source/:source')
-    findUsersWithSource(@Param('source') source: string) {
-        return this.usersService.findUsersWithSource(source);
-    }
+  @Get('/accounts/source/:source')
+  findUsersWithSource(@Param('source') source: string) {
+    return this.usersService.findUsersWithSource(source);
+  }
 
+  @Patch('/connect/account/:accountId/user/:userId')
+  connect(@Param('accountId') accountId: string, @Param('userId') userId: string) {
+    return this.usersService.connect(accountId, userId);
+  }
 
-    @Get('/pageAmount/:limit') 
-    findUsersPageNum(@Param('limit') limit: number) {
-        return this.usersService.findUsersPageNum(limit);
-    }
-
-    @Patch('/connect/account/:accountId/user/:userId')
-    connect(@Param('accountId') accountId: string, @Param('userId') userId: string) {
-        return this.usersService.connect(accountId, userId);
-    }
-
-    @Delete('/disconnect/account/:accountId/user/:userId')
-    diconnect(@Param('accountId') accountId: string, @Param('userId') userId: string) {
-        return this.usersService.disconnect(accountId, userId);
-    }
+  @Delete('/disconnect/account/:accountId/user/:userId')
+  diconnect(@Param('accountId') accountId: string, @Param('userId') userId: string) {
+    return this.usersService.disconnect(accountId, userId);
+  }
 }
