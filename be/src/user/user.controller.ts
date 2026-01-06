@@ -11,8 +11,8 @@ export class UserController {
     return this.usersService.createUser(user);
   }
 
-  @Get('/id/:id')
-  findUserByIdentityCard(@Param('id') identityCard: string) {
+  @Get('/identityCard/:identityCard')
+  findUserByIdentityCard(@Param('identityCard') identityCard: string) {
     return this.usersService.findUserByIdentityCard(identityCard);
   }
 

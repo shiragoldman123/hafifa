@@ -20,7 +20,7 @@ export class User {
   @Prop({ required: true })
   fullName: string;
 
-  @Prop({ required: true, match: /^\d{9}$/ })
+  @Prop({ required: true, match: /^\d{9}$/, unique: true })
   identityCard: string;
 
   @Prop({ required: true })

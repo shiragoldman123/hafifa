@@ -13,7 +13,6 @@ export class AccountController {
 
     @Patch('/:accountId')
     updateAccountsEmail(@Param('accountId') accountId: string, @Body() email: UpdateAccountDto) {
-        console.log(email)
         return this.accountService.updateAccountsEmail(accountId, email.email)
     }
 

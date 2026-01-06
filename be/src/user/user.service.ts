@@ -3,13 +3,13 @@ import { UserRepository } from '../user/user.repository';
 import { CreateUserInputDto } from "./user.dto";
 import { User } from "./user.schema";
 import { Types } from "mongoose";
-import { AccountsRepository } from "src/account/account.repository";
+import { AccountService } from "src/account/account.service";
 
 @Injectable()
 export class UserService {
     constructor(
     private readonly usersRepository: UserRepository,
-    private readonly accountRepository: AccountsRepository,
+    private readonly accountService: AccountService,
   ) {}
 
   createUser(user: CreateUserInputDto): Promise<User> {
@@ -20,7 +20,7 @@ export class UserService {
     return this.usersRepository.findUserByIdentityCard(identityCard);
  }
  
-  findUserByFullName(fullName: string) : Promise<User> {
+  findUserByFullName(fullName: string) : Promise<User[]> {
     return this.usersRepository.findUserByFullName(fullName);
  }
 
@@ -49,7 +49,7 @@ export class UserService {
  }
 
   findUsersWithSource(source: string): Promise<User[]> {
-    return this.accountRepository.findUsersBySource(source)
+    return this.accountService.findUsersBySource(source)
  }
 
  async connect(accountId: string, userId: string) {
@@ -57,20 +57,20 @@ export class UserService {
   const usrId = new Types.ObjectId(userId);
 
   await Promise.all([
-    this.accountRepository.findAccountById(accId),
+    this.accountService.findAccountById(accountId),
     this.usersRepository.findUserById(usrId),
   ]);
 
   try {
     await this.usersRepository.connectAccountToUser(accId, usrId);
-    await this.accountRepository.connectUserToAccount(accId, usrId);
+    await this.accountService.connectUserToAccount(accountId, userId);
 
     return { ok: true };
   } catch (err) {
     try {
       await Promise.allSettled([
         this.usersRepository.disconnectAccountToUser(accId, usrId),
-        this.accountRepository.disconnectUserToAccount(accId),
+        this.accountService.disconnectUserToAccount(accountId),
       ]);
     } catch (_) {
     }
@@ -83,13 +83,13 @@ async disconnect(accountId: string, userId: string) {
   const usrId = new Types.ObjectId(userId);
 
   await Promise.all([
-    this.accountRepository.findAccountById(accId),
+    this.accountService.findAccountById(accountId),
     this.usersRepository.findUserById(usrId),
   ]);
 
   try {
     await this.usersRepository.disconnectAccountToUser(accId, usrId);
-    await this.accountRepository.disconnectUserToAccount(accId);
+    await this.accountService.disconnectUserToAccount(accountId);
     return { ok: true };
   } catch (err) {
     throw err;

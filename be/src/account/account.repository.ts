@@ -15,31 +15,31 @@ export class AccountsRepository {
   }
 
   async connectUserToAccount(accountId: Types.ObjectId, userId: Types.ObjectId) {
-    const result = await this.accountModel.updateOne(
-    { _id: accountId },
+    const updatedAccount = await this.accountModel.findByIdAndUpdate(
+     accountId ,
     { $set: { user: userId } },
   );
 
-  if (result.matchedCount === 0) {
+  if (!updatedAccount) {
     throw new NotFoundException(`Account not found with id ${accountId}`);
   }
   }
 
   async disconnectUserToAccount(accountId: Types.ObjectId) {
-     const result = await this.accountModel.updateOne(
-    { _id: accountId },
+     const updatedAccount = await this.accountModel.findByIdAndUpdate(
+    accountId ,
     { $set: { user: null } },
   );
 
-  if (result.matchedCount === 0) {
+  if (!updatedAccount) {
     throw new NotFoundException(`Account not found with id ${accountId}`);
   }
   }
 
   async updateAccountsEmail(accountId: Types.ObjectId, email: string) {
-    const result = await this.accountModel.updateOne({ _id: accountId }, { $set: { email: email } });
+    const result = await this.accountModel.findByIdAndUpdate( accountId , { $set: { email: email } });
 
-    if (result.matchedCount === 0) {
+    if (!result) {
       throw new NotFoundException(`Account not found with id ${accountId}`);
     }
   }

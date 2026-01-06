@@ -10,7 +10,7 @@ export type AccountDocument = Account & Document;
   versionKey: false,
 })
 export class Account {
-    @Prop({required: true})
+    @Prop({required: true, unique: true})
     identifier: string
 
     @Prop({required: true})

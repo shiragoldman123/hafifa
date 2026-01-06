@@ -22,8 +22,8 @@ export class UserRepository {
 
   findUserByFullName(fullName: string) {
     return this.userModel
-      .findOne({ fullName: fullName })
-      .orFail(new NotFoundException(`User not found with identity card ${fullName}`))
+      .find({ fullName: fullName })
+      .orFail(new NotFoundException(`User not found with name ${fullName}`))
       .lean();
   }
 
@@ -50,29 +50,28 @@ export class UserRepository {
   }
 
   async connectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId) {
-    const result = await this.userModel.updateOne(
-    { _id: userId },
+    const result = await this.userModel.findByIdAndUpdate(
+     userId ,
     { $addToSet: { accounts: accountId } }, 
   );
 
-  if (result.matchedCount === 0) {
+  if (!result) {
     throw new NotFoundException(`User not found with id ${userId}`);
   }
   }
 
   async disconnectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId) {
-     const result = await this.userModel.updateOne(
-    { _id: userId },
+     const result = await this.userModel.findByIdAndUpdate(
+     userId ,
     { $pull: { accounts: accountId } },
   );
 
-  if (result.matchedCount === 0) {
+  if (!result) {
     throw new NotFoundException(`User not found with id ${userId}`);
   }
   }
 
   findUserById(userId: Types.ObjectId) {
-    console.log("got here")
       return this.userModel
       .findById( userId )
       .orFail(new NotFoundException(`couldnt find user with id: ${userId}`))
