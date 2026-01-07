@@ -4,7 +4,7 @@ import { apiRequest } from "../http";
 export function createAccount(input: CreateAccountInput) {
   return apiRequest<Account>({
     method: "POST",
-    url: "/api/accounts",
+    url: "accounts",
     data: input,
   });
 }

@@ -21,35 +21,7 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useUsers } from "../../api/users/user.hooks";
 import { PopulatedUser } from "../../types/user.types";
 import MenuItem from "@mui/material/MenuItem";
-
-function AccountsSection({ accounts }: { accounts: any[] }) {
-  if (!accounts || accounts.length === 0) {
-    return (
-      <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
-        No accounts
-      </Typography>
-    );
-  }
-
-  return (
-    <Stack spacing={1} sx={{ pt: 1 }}>
-      {accounts.map((acc, idx) => (
-        <Box key={acc._id ?? idx}>
-          <Typography variant="body2">
-            <b>Source:</b> {acc.source ?? "-"}{" "}
-            <b style={{ marginLeft: 8 }}>Identifier:</b> {acc.identifier ?? "-"}
-          </Typography>
-          {acc.email && (
-            <Typography variant="body2">
-              <b>Email:</b> {acc.email}
-            </Typography>
-          )}
-          {idx < accounts.length - 1 && <Divider sx={{ mt: 1 }} />}
-        </Box>
-      ))}
-    </Stack>
-  );
-}
+import AccountsSection from "./AccountsSection";
 
 export default function UserDisplay() {
   const [page, setPage] = useState(1);
@@ -154,19 +126,19 @@ export default function UserDisplay() {
           </Box>
         ) : (
           <Stack spacing={2}>
-            {users.map((u) => {
-              const id = String(u._id);
+            {users.map((user) => {
+              const id = String(user._id);
               const isOpen = expandedId === id;
 
-              const birth = u.birthDate
-                ? new Date(u.birthDate).toLocaleDateString()
+              const birth = user.birthDate
+                ? new Date(user.birthDate).toLocaleDateString()
                 : "-";
 
               return (
                 <Card key={id} variant="outlined">
                   <CardHeader
-                    title={`${u.firstName} ${u.lastName}`}
-                    subheader={`ID: ${u.identityCard} • Birth: ${birth} • Gender: ${u.gender}`}
+                    title={`${user.firstName} ${user.lastName}`}
+                    subheader={`ID: ${user.identityCard} • Birth: ${birth} • Gender: ${user.gender}`}
                     action={
                       <IconButton
                         onClick={() => toggle(id)}
@@ -183,7 +155,10 @@ export default function UserDisplay() {
                   <Collapse in={isOpen} timeout="auto" unmountOnExit>
                     <CardContent>
                       <Typography variant="subtitle2">Accounts</Typography>
-                      <AccountsSection accounts={(u as any).accounts ?? []} />
+                      <AccountsSection
+                        accounts={user.accounts}
+                        userId={user._id}
+                      />{" "}
                     </CardContent>
                   </Collapse>
                 </Card>

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { usersKeys } from "./users.keys";
-import { createUser, getUsers} from "./users.api";
+import { createUser, disconnect, getUsers} from "./users.api";
 import { CreateInputUser } from "../../types/user.types";
 
 export function useUsers(params: { page: number; limit: number; search?: string }) {
@@ -18,6 +18,16 @@ export function useUsers(params: { page: number; limit: number; search?: string 
   });
 }
 
+export function useDisconnect() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ accountId, userId }: { accountId: string; userId: string }) => 
+      disconnect(accountId, userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: usersKeys.lists() });
+    },
+  });
+}
 // export function useUser(id: string) {
 //   return useQuery({
 //     queryKey: usersKeys.detail(id),
