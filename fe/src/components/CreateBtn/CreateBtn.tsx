@@ -9,6 +9,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import Alert from "@mui/material/Alert";
 
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -23,6 +24,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import { CreateInputUser, Gender } from "../../types/user.types";
 import { useCreateUser } from "../../api/users/user.hooks";
+import { useCreateAccount } from "../../api/accounts/accounts.hooks";
+import { CreateAccountInput } from "../../types/account.types";
 
 type CreateAction = "addAccount" | "addUser";
 
@@ -33,16 +36,51 @@ function AddAccountDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const createAccount = useCreateAccount();
+  const [errors, setErrors] = React.useState<{
+    identifier?: string;
+    general?: string;
+  }>({});
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const data = new FormData(event.currentTarget);
 
-    const formData = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(formData.entries());
+    const payload: CreateAccountInput = {
+      identifier: data.get("identifier") as string,
+      source: data.get("source") as string,
+      email: data.get("email") as string,
+    };
 
-    console.log("AddAccount payload:", payload);
-    // TODO: api call
-    onClose();
+    createAccount.mutate(payload, {
+      onSuccess: () => {
+        setErrors({});
+        onClose();
+      },
+      onError: (error: any) => {
+        const errorMessage = 
+          error?.response?.data?.message || 
+          error?.message || 
+          "Failed to create account. Please try again.";
+        
+        if (errorMessage.toLowerCase().includes("identifier")) {
+          setErrors({
+            identifier: errorMessage,
+          });
+        } else {
+          setErrors({
+            general: errorMessage,
+          });
+        }
+      },
+    });
   };
+
+  React.useEffect(() => {
+    if (!open) {
+      setErrors({});
+    }
+  }, [open]);
 
   return (
     <Dialog
@@ -59,6 +97,12 @@ function AddAccountDialog({
       <DialogTitle sx={{ pb: 1 }}>Add account</DialogTitle>
 
       <DialogContent dividers sx={{ pt: 2 }}>
+        {errors.general && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {errors.general}
+          </Alert>
+        )}
+        
         <Box
           component="form"
           onSubmit={handleSubmit}
@@ -85,7 +129,8 @@ function AddAccountDialog({
             type="text"
             fullWidth
             variant="standard"
-            helperText="A unique identifier for the account"
+            error={!!errors.identifier}
+            helperText={errors.identifier || "A unique identifier for the account"}
           />
 
           <TextField
@@ -103,8 +148,13 @@ function AddAccountDialog({
 
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" form="add-account-form" variant="contained">
-          Save
+        <Button 
+          type="submit" 
+          form="add-account-form" 
+          variant="contained"
+          disabled={createAccount.isPending}
+        >
+          {createAccount.isPending ? "Saving..." : "Save"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -118,15 +168,20 @@ function AddUserDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const createUser = useCreateUser(); 
+  const createUser = useCreateUser();
   const [errors, setErrors] = React.useState<{
     identityCard?: string;
     birthDate?: string;
+    general?: string;
   }>({});
 
   const validateForm = (data: FormData): boolean => {
-    const newErrors: { identityCard?: string; birthDate?: string } = {};
-    
+    const newErrors: { 
+      identityCard?: string; 
+      birthDate?: string;
+      general?: string;
+    } = {};
+
     const identityCard = data.get("identityCard") as string;
     if (identityCard.length !== 9) {
       newErrors.identityCard = "Identity card must be exactly 9 characters";
@@ -135,8 +190,8 @@ function AddUserDialog({
     const birthDate = data.get("birthDate") as string;
     const selectedDate = new Date(birthDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); 
-    
+    today.setHours(0, 0, 0, 0);
+
     if (selectedDate > today) {
       newErrors.birthDate = "Birth date cannot be in the future";
     }
@@ -161,8 +216,31 @@ function AddUserDialog({
       gender: data.get("gender") as Gender,
     };
 
-    createUser.mutate(payload); 
-    onClose();
+    createUser.mutate(payload, {
+      onSuccess: () => {
+        setErrors({});
+        onClose();
+      },
+      onError: (error: any) => {
+        const errorMessage = 
+          error?.response?.data?.message || 
+          error?.message || 
+          "Failed to create user. Please try again.";
+        
+        if (
+          errorMessage.toLowerCase().includes("identity card") ||
+          errorMessage.toLowerCase().includes("identitycard")
+        ) {
+          setErrors({
+            identityCard: errorMessage,
+          });
+        } else {
+          setErrors({
+            general: errorMessage,
+          });
+        }
+      },
+    });
   };
 
   React.useEffect(() => {
@@ -186,6 +264,12 @@ function AddUserDialog({
       <DialogTitle sx={{ pb: 1 }}>Add user</DialogTitle>
 
       <DialogContent dividers sx={{ pt: 2 }}>
+        {errors.general && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {errors.general}
+          </Alert>
+        )}
+        
         <Box
           component="form"
           onSubmit={handleSubmit}
@@ -240,7 +324,7 @@ function AddUserDialog({
             slotProps={{
               inputLabel: { shrink: true },
               htmlInput: {
-                max: new Date().toISOString().split("T")[0], 
+                max: new Date().toISOString().split("T")[0],
               },
             }}
           />
@@ -268,8 +352,13 @@ function AddUserDialog({
 
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" form="add-user-form" variant="contained">
-          Save
+        <Button 
+          type="submit" 
+          form="add-user-form" 
+          variant="contained"
+          disabled={createUser.isPending}
+        >
+          {createUser.isPending ? "Saving..." : "Save"}
         </Button>
       </DialogActions>
     </Dialog>

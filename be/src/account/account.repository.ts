@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Account } from './account.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import {  Model, Types } from 'mongoose';
@@ -9,10 +9,23 @@ import { CreateAccountDto } from './account.dto';
 export class AccountsRepository {
   constructor(@InjectModel(Account.name) private readonly accountModel: Model<Account>) {}
 
-  createAccount(accountDto: CreateAccountDto) {
+ async createAccount(accountDto: CreateAccountDto) {
+  try {
     const createdAccount = new this.accountModel(accountDto);
-    return createdAccount.save();
+    return await createdAccount.save();
+  } catch (error: any) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      
+      if (field === 'identifier') {
+        throw new ConflictException('An account with this identifier already exists');
+      }
+      
+      throw new ConflictException('An account with these details already exists');
+    }
+    throw error;
   }
+}
 
   async connectUserToAccount(accountId: Types.ObjectId, userId: Types.ObjectId) {
     const updatedAccount = await this.accountModel.findByIdAndUpdate(

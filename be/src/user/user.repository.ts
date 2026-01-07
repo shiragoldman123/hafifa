@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User } from './user.schema';
@@ -8,10 +8,26 @@ import { CreateUserDto } from './user.dto';
 export class UserRepository {
   constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
 
-  createUser(userDto: CreateUserDto) {
+
+async createUser(userDto: CreateUserDto) {
+  try {
     const createdUser = new this.userModel(userDto);
-    return createdUser.save();
+    
+    return await createdUser.save();
+  } catch (error: any) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      
+      if (field === 'identityCard') {
+        throw new ConflictException('A user with this identity card number already exists');
+      }
+      
+      throw new ConflictException('A user with these details already exists');
+    }
+
+    throw error;
   }
+}
 
   findUserByIdentityCard(identityCard: string) {
     return this.userModel
