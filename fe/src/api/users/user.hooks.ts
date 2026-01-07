@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { usersKeys } from "./users.keys";
-import { getUsers} from "./users.api";
+import { createUser, getUsers} from "./users.api";
+import { CreateInputUser } from "../../types/user.types";
 
 export function useUsers(params: { page: number; limit: number; search?: string }) {
   return useQuery({
@@ -25,15 +26,15 @@ export function useUsers(params: { page: number; limit: number; search?: string 
 //   });
 // }
 
-// export function useCreateUser() {
-//   const qc = useQueryClient();
-//   return useMutation({
-//     mutationFn: (input: CreateUserInput) => createUser(input),
-//     onSuccess: () => {
-//       qc.invalidateQueries({ queryKey: usersKeys.lists() });
-//     },
-//   });
-// }
+export function useCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateInputUser) => createUser(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: usersKeys.lists() });
+    },
+  });
+}
 
 // export function useUpdateUser(id: string) {
 //   const qc = useQueryClient();

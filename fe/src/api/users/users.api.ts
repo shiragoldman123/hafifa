@@ -1,4 +1,4 @@
-import { Paginated, PopulatedUser, User } from "../../types/user.types";
+import { CreateInputUser, Paginated, PopulatedUser, User } from "../../types/user.types";
 import { apiRequest } from "../http";
 
 export function getUsers(params: { page: number; limit: number; search?: string }) {
@@ -20,13 +20,13 @@ export function getUsers(params: { page: number; limit: number; search?: string 
 //   });
 // }
 
-// export function createUser(input: CreateUserInput) {
-//   return apiRequest<User>({
-//     method: "POST",
-//     url: "/api/users",
-//     data: input,
-//   });
-// }
+export function createUser(input: CreateInputUser) {
+  return apiRequest<User>({
+    method: "POST",
+    url: "/api/users",
+    data: input,
+  });
+}
 
 // export function updateUser(id: string, input: UpdateUserInput) {
 //   return apiRequest<User>({
