@@ -38,4 +38,8 @@ export class AccountService {
   disconnectUserToAccount(accountId: string) {
     return this.accountsRepository.disconnectUserToAccount(new Types.ObjectId(accountId));
   }
+
+  findAllAccounts(): Promise<Account[]> {
+    return this.accountsRepository.findAllAccounts();
+  } 
 }

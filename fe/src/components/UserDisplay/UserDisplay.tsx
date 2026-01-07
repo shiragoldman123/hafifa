@@ -22,6 +22,7 @@ import { useUsers } from "../../api/users/user.hooks";
 import { PopulatedUser } from "../../types/user.types";
 import MenuItem from "@mui/material/MenuItem";
 import AccountsSection from "./AccountsSection";
+import ConnectAccountModal from "./ConnectAccountModal";
 
 export default function UserDisplay() {
   const [page, setPage] = useState(1);
@@ -155,6 +156,10 @@ export default function UserDisplay() {
                   <Collapse in={isOpen} timeout="auto" unmountOnExit>
                     <CardContent>
                       <Typography variant="subtitle2">Accounts</Typography>
+                      <ConnectAccountModal
+                        userId={user._id}
+                        userName={`${user.firstName} ${user.lastName}`}
+                      />
                       <AccountsSection
                         accounts={user.accounts}
                         userId={user._id}

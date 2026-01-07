@@ -27,6 +27,10 @@ export class AccountsRepository {
   }
 }
 
+findAllAccounts() {
+ return this.accountModel.find().lean();
+}
+
   async connectUserToAccount(accountId: Types.ObjectId, userId: Types.ObjectId) {
     const updatedAccount = await this.accountModel.findByIdAndUpdate(
      accountId ,

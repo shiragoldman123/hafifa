@@ -19,6 +19,13 @@ export function disconnect(accountId: string, userId: string) {
     url: `users/disconnect/account/${accountId}/user/${userId}`
   })
 }
+
+export function connect(accountId: string, userId: string) {
+  return apiRequest<void>({
+    method: "PATCH",
+    url: `users/connect/account/${accountId}/user/${userId}`
+  })
+}
 // export function getUserById(id: string) {
 //   return apiRequest<User>({
 //     method: "GET",

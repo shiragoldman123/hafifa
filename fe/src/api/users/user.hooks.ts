@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { usersKeys } from "./users.keys";
-import { createUser, disconnect, getUsers} from "./users.api";
+import { connect, createUser, disconnect, getUsers} from "./users.api";
 import { CreateInputUser } from "../../types/user.types";
+import { accountsKeys } from "../accounts/accounts.keys";
 
 export function useUsers(params: { page: number; limit: number; search?: string }) {
   return useQuery({
@@ -18,16 +19,30 @@ export function useUsers(params: { page: number; limit: number; search?: string 
   });
 }
 
+export function useConnect() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ accountId, userId }: { accountId: string; userId: string }) => 
+      connect(accountId, userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: accountsKeys.all });
+      qc.invalidateQueries({ queryKey: usersKeys.all });
+    },
+  });
+}
+
 export function useDisconnect() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ accountId, userId }: { accountId: string; userId: string }) => 
       disconnect(accountId, userId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: usersKeys.lists() });
+      qc.invalidateQueries({ queryKey: accountsKeys.all });
+      qc.invalidateQueries({ queryKey: usersKeys.all });
     },
   });
 }
+
 // export function useUser(id: string) {
 //   return useQuery({
 //     queryKey: usersKeys.detail(id),

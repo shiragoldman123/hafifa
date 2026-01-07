@@ -16,6 +16,11 @@ export class AccountController {
         return this.accountService.updateAccountsEmail(accountId, email.email)
     }
 
+    @Get('')
+    findAllAccounts() {
+        return this.accountService.findAllAccounts();
+    }
+
     @Get('source/:source')
     findAllAcountsFromSource(@Param('source') source: string) {
         return this.accountService.findAllAcountsFromSource(source)

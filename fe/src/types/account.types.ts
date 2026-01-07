@@ -5,6 +5,7 @@ export type Account = {
     identifier: string;
     source: string;
     email: string;
+    user: string
 }
 
 export type CreateAccountInput = Omit<Account, '_id'>

@@ -19,7 +19,7 @@ export class Account {
     @Prop()
     email: string
 
-    @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Users' })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Users' })
     user: User | ObjectId
 }
 
