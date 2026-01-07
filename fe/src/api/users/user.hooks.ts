@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { usersKeys } from "./users.keys";
-import { connect, createUser, disconnect, getUsers} from "./users.api";
+import { connect, createUser, disconnect, findUserByAccountIdentifier, findUserByFullName, findUsersWithSource, getUsers} from "./users.api";
 import { CreateInputUser } from "../../types/user.types";
 import { accountsKeys } from "../accounts/accounts.keys";
 
@@ -43,14 +43,6 @@ export function useDisconnect() {
   });
 }
 
-// export function useUser(id: string) {
-//   return useQuery({
-//     queryKey: usersKeys.detail(id),
-//     queryFn: () => getUserById(id),
-//     enabled: !!id,
-//   });
-// }
-
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({
@@ -61,23 +53,41 @@ export function useCreateUser() {
   });
 }
 
-// export function useUpdateUser(id: string) {
-//   const qc = useQueryClient();
-//   return useMutation({
-//     mutationFn: (input: UpdateUserInput) => updateUser(id, input),
-//     onSuccess: () => {
-//       qc.invalidateQueries({ queryKey: usersKeys.lists() });
-//       qc.invalidateQueries({ queryKey: usersKeys.detail(id) });
-//     },
-//   });
-// }
+export function useFindUsersByFullName(fullName: string | null) {
+  return useQuery({
+    queryKey: usersKeys.byFullName(fullName),
+    queryFn: () => {
+      if (!fullName) {
+        throw new Error('Full name is required');
+      }
+      return findUserByFullName(fullName);
+    },
+    enabled: !!fullName
+  });
+}
 
-// export function useDeleteUser() {
-//   const qc = useQueryClient();
-//   return useMutation({
-//     mutationFn: (id: string) => deleteUser(id),
-//     onSuccess: () => {
-//       qc.invalidateQueries({ queryKey: usersKeys.lists() });
-//     },
-//   });
-// }
+export function useFindUserByAccountIdentifier(accountIdentifier: string | null) {
+  return useQuery({
+    queryKey: usersKeys.byAccountIdentifier(accountIdentifier),
+    queryFn: () => {
+      if (!accountIdentifier) {
+        throw new Error('Account identifier is required');
+      }
+      return findUserByAccountIdentifier(accountIdentifier);
+    },
+    enabled: !!accountIdentifier
+  });
+}
+
+export function useFindUserWithSource(source: string | null) {
+  return useQuery({
+    queryKey: usersKeys.bySource(source),
+    queryFn: () => {
+      if (!source) {
+        throw new Error('Source is required');
+      }
+      return findUsersWithSource(source);
+    },
+    enabled: !!source
+  });
+}

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { UserRepository } from '../user/user.repository';
 import { CreateUserInputDto } from "./user.dto";
 import { User } from "./user.schema";
@@ -43,9 +43,18 @@ export class UserService {
 }
 
 
-  findUserByAccount(accountId: string): Promise<User> {
-    const objId = new Types.ObjectId(accountId);
-    return this.usersRepository.findUserByAccount(objId);
+ async findUserByAccountIdentifier(identifier: string): Promise<User> {
+    const account = await this.accountService.findAccountByIdentifier(identifier);
+
+    if (!account) {
+    throw new NotFoundException('Account not found');
+  }
+  
+  if (!account.user) {
+    throw new NotFoundException('Account is not connected to any user');
+  }
+  
+    return this.usersRepository.findUserByAccount(account?.id);
  }
 
   findUsersWithSource(source: string): Promise<User[]> {

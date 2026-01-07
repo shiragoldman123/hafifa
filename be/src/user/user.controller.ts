@@ -26,9 +26,9 @@ export class UserController {
     return this.usersService.findUsersPaginated(Number(page), Number(limit));
   }
 
-  @Get('/account/:accountId')
-  findUserByAccount(@Param('accountId') accountId: string) {
-    return this.usersService.findUserByAccount(accountId);
+  @Get('/account/identifier/:identifier')
+  findUserByAccountIdentifier(@Param('identifier') identifier: string) {
+    return this.usersService.findUserByAccountIdentifier(identifier);
   }
 
   @Get('/accounts/source/:source')

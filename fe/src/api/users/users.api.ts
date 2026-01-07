@@ -26,12 +26,6 @@ export function connect(accountId: string, userId: string) {
     url: `users/connect/account/${accountId}/user/${userId}`
   })
 }
-// export function getUserById(id: string) {
-//   return apiRequest<User>({
-//     method: "GET",
-//     url: `/api/users/${id}`,
-//   });
-// }
 
 export function createUser(input: CreateInputUser) {
   return apiRequest<User>({
@@ -41,17 +35,23 @@ export function createUser(input: CreateInputUser) {
   });
 }
 
-// export function updateUser(id: string, input: UpdateUserInput) {
-//   return apiRequest<User>({
-//     method: "PATCH",
-//     url: `/api/users/${id}`,
-//     data: input,
-//   });
-// }
+export function findUserByFullName(fullName: string) {
+  return apiRequest<PopulatedUser[]>({
+    method:"GET",
+    url: `users/fullName/${fullName}`
+  });
+}
 
-// export function deleteUser(id: string) {
-//   return apiRequest<{ success: true }>({
-//     method: "DELETE",
-//     url: `/api/users/${id}`,
-//   });
-// }
+export function findUserByAccountIdentifier(identifier: string) {
+  return apiRequest<PopulatedUser>({
+    method:"GET",
+    url: `users/account/identifier/${identifier}`
+  });
+}
+
+export function findUsersWithSource(source: string) {
+  return apiRequest<PopulatedUser[]>({
+    method: "GET",
+    url: `users/accounts/source/${source}`
+  });
+}

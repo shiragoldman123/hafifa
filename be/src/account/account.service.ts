@@ -41,5 +41,9 @@ export class AccountService {
 
   findAllAccounts(): Promise<Account[]> {
     return this.accountsRepository.findAllAccounts();
-  } 
+  }
+  
+  findAccountByIdentifier(identifier: string) {
+    return this.accountsRepository.findAccountByIdentifier(identifier);
+  }
 }

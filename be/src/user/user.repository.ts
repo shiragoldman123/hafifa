@@ -39,6 +39,7 @@ async createUser(userDto: CreateUserDto) {
   findUserByFullName(fullName: string) {
     return this.userModel
       .find({ fullName: fullName })
+      .populate('accounts')
       .orFail(new NotFoundException(`User not found with name ${fullName}`))
       .lean();
   }
@@ -62,6 +63,7 @@ async createUser(userDto: CreateUserDto) {
     return this.userModel
       .findOne({ accounts: accountId })
       .orFail(new NotFoundException(`User not found for account ${accountId}`))
+      .populate('accounts')
       .lean();
   }
 
