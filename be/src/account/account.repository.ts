@@ -70,8 +70,8 @@ export class AccountsRepository {
     return this.accountModel.findOne({ identifier }).exec();
   }
 
-findUsersBySource(source: string): Promise<User[]> {
-  return this.accountModel.aggregate([
+async findUsersBySource(source: string): Promise<User[]> {
+  const users = await this.accountModel.aggregate([
     { 
       $match: { source } 
     },
@@ -107,6 +107,12 @@ findUsersBySource(source: string): Promise<User[]> {
       },
     },
   ]);
+
+  if(users.length === 0) {
+    throw new NotFoundException(`no users where found with source ${source}`)
+  } 
+
+  return users;
 }
 
 }

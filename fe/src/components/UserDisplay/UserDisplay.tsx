@@ -53,7 +53,6 @@ export default function UserDisplay() {
     searchType === "accountIdentifier" ? activeSearch : null
   );
 
-  // Determine which data to display
   const isSearchActive = !!activeSearch && !!searchType;
   const isSearchLoading = isLoadingFullName || isLoadingSource || isLoadingAccountIdentifier;
 
@@ -61,7 +60,6 @@ export default function UserDisplay() {
   let totalPages = 1;
 
   if (isSearchActive) {
-    // Show search results
     if (searchType === "fullName" && fullNameResults) {
       displayUsers = Array.isArray(fullNameResults) ? fullNameResults : [fullNameResults];
     } else if (searchType === "source" && sourceResults) {
@@ -69,9 +67,8 @@ export default function UserDisplay() {
     } else if (searchType === "accountIdentifier" && accountIdentifierResult) {
       displayUsers = Array.isArray(accountIdentifierResult) ? accountIdentifierResult : [accountIdentifierResult];
     }
-    totalPages = 1; // Search results don't have pagination
+    totalPages = 1; 
   } else {
-    // Show paginated results
     displayUsers = paginatedData?.data ?? [];
     totalPages = paginatedData?.totalPages ?? 1;
   }
@@ -140,23 +137,24 @@ export default function UserDisplay() {
           size="small"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress}
           disabled={!searchType}
           placeholder={
             searchType === "fullName" ? "Enter full name..." :
-            searchType === "source" ? "Enter source (e.g., Gmail)..." :
+            searchType === "source" ? "Enter source (e.g., Google)..." :
             searchType === "accountIdentifier" ? "Enter account identifier..." :
             "Select search type first"
           }
           sx={{ minWidth: 250 }}
-          InputProps={{
-            endAdornment: activeSearch && (
+          slotProps={{
+            input: 
+           { endAdornment: activeSearch && (
               <InputAdornment position="end">
                 <IconButton size="small" onClick={handleClearSearch}>
                   <ClearIcon />
                 </IconButton>
               </InputAdornment>
-            ),
+            )},
           }}
         />
 
@@ -180,7 +178,6 @@ export default function UserDisplay() {
         )}
       </Box>
 
-      {/* Active Search Indicator */}
       {activeSearch && (
         <Alert severity="info" sx={{ mb: 2, width: "80%" }}>
           Showing results for <strong>{searchType}</strong>: "{activeSearch}"
@@ -188,7 +185,6 @@ export default function UserDisplay() {
       )}
 
       <Paper sx={{ width: "80%", p: 2 }}>
-        {/* Pagination Controls - Only show when not searching */}
         {!isSearchActive && (
           <Box
             sx={{

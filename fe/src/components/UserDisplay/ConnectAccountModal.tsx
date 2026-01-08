@@ -19,14 +19,6 @@ import { useGetAllAccounts, useGetAccountsBySource } from "../../api/accounts/ac
 import { useConnect } from "../../api/users/user.hooks";
 import { Account, PopulatedAccount } from "../../types/account.types";
 
-// interface Account {
-//   _id: string;
-//   source: string;
-//   identifier: string;
-//   email?: string;
-//   userId?: string | null;
-// }
-
 interface ConnectAccountModalProps {
   userId: string;
   userName: string; 

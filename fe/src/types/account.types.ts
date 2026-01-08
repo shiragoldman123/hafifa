@@ -8,7 +8,7 @@ export type Account = {
     user: string
 }
 
-export type CreateAccountInput = Omit<Account, '_id'>
+export type CreateAccountInput = Omit<Account, '_id' | 'user'>
 
 export type PopulatedAccount = Account & {
     user: User;
