@@ -12,14 +12,8 @@ const config = {
     usersCollectionName: env.get('USERS_COLLECTION_NAME').required().asString(),
     accountsCollectionName: env.get('ACCOUNTS_COLLECTION_NAME').required().asString(),
     isReplaceAll: env.get('IS_REPLACE_ALL').default('true').asBool(),
-    queries: {
-      personalNumberKeyName: env.get('PERSONAL_NUMBER_KEY_NAME').required().asString(),
-      identityCardKeyName: env.get('IDENTITY_CARD_KEY_NAME').required().asString(),
-      usernameKeyName: env.get('USERNAME_KEY_NAME').required().asString(),
-    },
   },
   source: {
-    getAllUrl: env.get('SOURCE_GET_ALL_URL').required().asUrlString(),
     timeout: env.get('SOURCE_TIMEOUT').default(10000).asIntPositive(),
   },
   metaData: {
