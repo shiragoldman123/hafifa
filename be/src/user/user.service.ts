@@ -1,108 +1,99 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '../user/user.repository';
-import { CreateUserInputDto } from "./user.dto";
-import { User } from "./user.schema";
-import { Types } from "mongoose";
-import { AccountService } from "src/account/account.service";
+import { CreateUserInputDto } from './user.dto';
+import { User } from './user.schema';
+import { Types } from 'mongoose';
+import { AccountService } from 'src/account/account.service';
 
 @Injectable()
 export class UserService {
-    constructor(
+  constructor(
     private readonly usersRepository: UserRepository,
     private readonly accountService: AccountService,
   ) {}
 
   createUser(user: CreateUserInputDto): Promise<User> {
-    return this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user})
- } 
+    return this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user });
+  }
 
   findUserByIdentityCard(identityCard: string): Promise<User> {
     return this.usersRepository.findUserByIdentityCard(identityCard);
- }
- 
-  findUserByFullName(fullName: string) : Promise<User[]> {
+  }
+
+  findUserByFullName(fullName: string): Promise<User[]> {
     return this.usersRepository.findUserByFullName(fullName);
- }
+  }
 
   async findUsersPaginated(page: number, limit: number) {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.max(1, Math.min(limit, 100)); 
-  const skip = (safePage - 1) * safeLimit;
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.max(1, Math.min(limit, 100));
+    const skip = (safePage - 1) * safeLimit;
 
-  const { data, total } = await this.usersRepository.findUsersPaginated(skip, safeLimit);
+    const { data, total } = await this.usersRepository.findUsersPaginated(skip, safeLimit);
 
-  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+    const totalPages = Math.max(1, Math.ceil(total / safeLimit));
 
-  return {
-    data,
-    page: safePage,
-    limit: safeLimit,
-    total,
-    totalPages,
-  };
-}
+    return {
+      data,
+      page: safePage,
+      limit: safeLimit,
+      total,
+      totalPages,
+    };
+  }
 
-
- async findUserByAccountIdentifier(identifier: string): Promise<User> {
+  async findUserByAccountIdentifier(identifier: string): Promise<User> {
     const account = await this.accountService.findAccountByIdentifier(identifier);
 
     if (!account) {
-    throw new NotFoundException('Account not found');
-  }
-  
-  if (!account.user) {
-    throw new NotFoundException('Account is not connected to any user');
-  }
-  
+      throw new NotFoundException('Account not found');
+    }
+
+    if (!account.user) {
+      throw new NotFoundException('Account is not connected to any user');
+    }
+
     return this.usersRepository.findUserByAccount(account?.id);
- }
+  }
 
   findUsersWithSource(source: string): Promise<User[]> {
-    return this.accountService.findUsersBySource(source)
- }
+    return this.accountService.findUsersBySource(source);
+  }
 
- async connect(accountId: string, userId: string) {
-  const accId = new Types.ObjectId(accountId);
-  const usrId = new Types.ObjectId(userId);
+  async connect(accountId: string, userId: string) {
+    const accId = new Types.ObjectId(accountId);
+    const usrId = new Types.ObjectId(userId);
 
-  await Promise.all([
-    this.accountService.findAccountById(accountId),
-    this.usersRepository.findUserById(usrId),
-  ]);
+    await Promise.all([this.accountService.findAccountById(accountId), this.usersRepository.findUserById(usrId)]);
 
-  try {
-    await this.usersRepository.connectAccountToUser(accId, usrId);
-    await this.accountService.connectUserToAccount(accountId, userId);
-
-    return { ok: true };
-  } catch (err) {
     try {
-      await Promise.allSettled([
-        this.usersRepository.disconnectAccountToUser(accId, usrId),
-        this.accountService.disconnectUserToAccount(accountId),
-      ]);
-    } catch (_) {
+      await this.usersRepository.connectAccountToUser(accId, usrId);
+      await this.accountService.connectUserToAccount(accountId, userId);
+
+      return { ok: true };
+    } catch (err) {
+      try {
+        await Promise.allSettled([
+          this.usersRepository.disconnectAccountToUser(accId, usrId),
+          this.accountService.disconnectUserToAccount(accountId),
+        ]);
+      } catch (_) {}
+      throw err;
     }
-    throw err;
   }
-}
 
-async disconnect(accountId: string, userId: string) {
-  const accId = new Types.ObjectId(accountId);
-  const usrId = new Types.ObjectId(userId);
+  async disconnect(accountId: string, userId: string) {
+    const accId = new Types.ObjectId(accountId);
+    const usrId = new Types.ObjectId(userId);
 
-  await Promise.all([
-    this.accountService.findAccountById(accountId),
-    this.usersRepository.findUserById(usrId),
-  ]);
+    await Promise.all([this.accountService.findAccountById(accountId), this.usersRepository.findUserById(usrId)]);
 
-  try {
-    await this.usersRepository.disconnectAccountToUser(accId, usrId);
-    await this.accountService.disconnectUserToAccount(accountId);
-    return { ok: true };
-  } catch (err) {
-    throw err;
+    try {
+      await this.usersRepository.disconnectAccountToUser(accId, usrId);
+      await this.accountService.disconnectUserToAccount(accountId);
+      return { ok: true };
+    } catch (err) {
+      throw err;
+    }
   }
-}
-
 }
