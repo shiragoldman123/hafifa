@@ -89,7 +89,7 @@ export class UserRepository {
       .lean();
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_HOUR)
   async syncUsers() {
     this.logger.log('Starting user sync...');
     try {
