@@ -3,7 +3,7 @@ import { AccountsRepository } from './account.repository';
 import { CreateAccountDto } from './account.dto';
 import { Types } from 'mongoose';
 import { Account } from './account.schema';
-import { UserWrite } from 'src/user/userWrite.schema';
+import { UserWrite } from 'src/user/schemas/userWrite.schema';
 
 @Injectable()
 export class AccountService {

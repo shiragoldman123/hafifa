@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserWriteRepository } from './userWrite.repository';
+import { UserWriteRepository } from './repositories/userWrite.repository';
 import { CreateUserInputDto } from './user.dto';
 import { Types } from 'mongoose';
 import { AccountService } from 'src/account/account.service';
-import { UserWrite } from './userWrite.schema';
+import { UserWrite } from './schemas/userWrite.schema';
 
 @Injectable()
 export class UserService {

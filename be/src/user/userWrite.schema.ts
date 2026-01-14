@@ -1,16 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, ObjectId } from 'mongoose';
-import config from '../config/env.config';
 import { Account } from 'src/account/account.schema';
+import config from 'src/config/env.config';
 import { Gender } from './user.dto';
 
-export type UserDocument = User & Document;
+export type UserDocument = UserWrite & Document;
 
 @Schema({
   collection: config.mongo.usersCollectionName,
   versionKey: false,
 })
-export class User {
+export class UserWrite {
   @Prop({ required: true, minlength: 2, maxlength: 50 })
   firstName: string;
 
@@ -33,4 +33,4 @@ export class User {
   accounts: (ObjectId | Account)[];
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(UserWrite);

@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, ObjectId } from 'mongoose';
 import config from '../config/env.config';
-import { UserWrite } from 'src/user/userWrite.schema';
+import { UserWrite } from 'src/user/schemas/userWrite.schema';
 
 export type AccountDocument = Account & Document;
 

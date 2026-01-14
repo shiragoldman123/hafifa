@@ -39,6 +39,31 @@ services:
         condition: service_healthy
     networks:
       - userly-network
+  
+    backend:
+    build:
+      context: ./read-be
+      dockerfile: Dockerfile
+    container_name: userly-read-backend
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=${MONGO_URI}
+      - USERS_VIEW_COLLECTION_NAME = users_view
+      - ACCOUNTS_VIEW_COLLECTION_NAME = accounts_view
+      - UPDATE_CRON=0 0 12 * * *
+      - NODE_ENV=production
+      - SYSTEM_NAME=userly
+      - SERVICE_NAME=userly-es
+      - DESCRIPTION=tracking user data
+      - SOURCE_TIMEOUT=10000
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - userly-network
 
   frontend:
     build:
