@@ -1,13 +1,12 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Account } from './account.schema';
+import { WriteAccount } from './account.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateAccountDto } from './account.dto';
-import { UserWrite } from 'src/user/userWrite.schema';
 
 @Injectable()
 export class AccountsRepository {
-  constructor(@InjectModel(Account.name) private readonly accountModel: Model<Account>) {}
+  constructor(@InjectModel(WriteAccount.name) private readonly accountModel: Model<WriteAccount>) {}
 
   async createAccount(accountDto: CreateAccountDto) {
     try {
@@ -25,10 +24,6 @@ export class AccountsRepository {
       }
       throw error;
     }
-  }
-
-  findAllAccounts() {
-    return this.accountModel.find().lean();
   }
 
   async connectUserToAccount(accountId: Types.ObjectId, userId: Types.ObjectId) {
@@ -55,64 +50,10 @@ export class AccountsRepository {
     }
   }
 
-  findAllAcountsFromSource(source: string) {
-    return this.accountModel.find({ source: source }).lean();
-  }
-
-  findAccountById(accountId: Types.ObjectId) {
+    findAccountById(accountId: Types.ObjectId) {
     return this.accountModel
       .findById(accountId)
       .orFail(new NotFoundException(`couldnt find account with id: ${accountId}`))
       .lean();
   }
-
-  findAccountByIdentifier(identifier: string) {
-    return this.accountModel.findOne({ identifier }).exec();
-  }
-
-async findUsersBySource(source: string): Promise<UserWrite[]> {
-  const users = await this.accountModel.aggregate([
-    { 
-      $match: { source } 
-    },
-
-    { 
-      $group: { _id: "$user" } 
-    },
-    {
-      $lookup: {
-        from: "Users",           
-        localField: "_id",
-        foreignField: "_id",
-        as: "user",
-      },
-    },
-    { 
-      $unwind: "$user" 
-    },
-    {
-      $lookup: {
-        from: "Accounts",        
-        localField: "_id",
-        foreignField: "user",
-        as: "accounts",
-      },
-    },
-
-    {
-      $replaceRoot: {
-        newRoot: {
-          $mergeObjects: ["$user", { accounts: "$accounts" }],
-        },
-      },
-    },
-  ]);
-
-  if(users.length === 0) {
-    throw new NotFoundException(`no users where found with source ${source}`)
-  } 
-
-  return users;
-}
-
 }

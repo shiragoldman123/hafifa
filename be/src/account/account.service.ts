@@ -1,32 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { AccountsRepository } from './account.repository';
 import { CreateAccountDto } from './account.dto';
 import { Types } from 'mongoose';
-import { Account } from './account.schema';
-import { UserWrite } from 'src/user/userWrite.schema';
+import { WriteAccount } from './account.schema';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class AccountService {
-  constructor(private readonly accountsRepository: AccountsRepository) {}
+  constructor(
+    private readonly accountsRepository: AccountsRepository,
+    @Inject('RABBITMQ') private readonly rabbitmq: ClientProxy,
+  ) {}
 
-  createAccount(accountDto: CreateAccountDto): Promise<Account> {
-    return this.accountsRepository.createAccount(accountDto);
+  createAccount(accountDto: CreateAccountDto): Promise<WriteAccount> {
+    const account = this.accountsRepository.createAccount(accountDto);
+
+    this.rabbitmq.emit('account.create', account);
+
+    return account;
   }
 
   updateAccountsEmail(accountId: string, email: string): Promise<void> {
-    return this.accountsRepository.updateAccountsEmail(new Types.ObjectId(accountId), email);
-  }
+    const account = this.accountsRepository.updateAccountsEmail(new Types.ObjectId(accountId), email);
 
-  findAllAcountsFromSource(source: string): Promise<Account[]> {
-    return this.accountsRepository.findAllAcountsFromSource(source);
-  }
+    this.rabbitmq.emit('account.update', account)
 
-  findUsersBySource(source: string): Promise<UserWrite[]> {
-    return this.accountsRepository.findUsersBySource(source);
-  }
-
-  findAccountById(accountId: string): Promise<Account> {
-    return this.accountsRepository.findAccountById(new Types.ObjectId(accountId));
+    return account
   }
 
   connectUserToAccount(accountId: string, userId: string) {
@@ -39,11 +38,7 @@ export class AccountService {
     return this.accountsRepository.disconnectUserToAccount(new Types.ObjectId(accountId));
   }
 
-  findAllAccounts(): Promise<Account[]> {
-    return this.accountsRepository.findAllAccounts();
-  }
-  
-  findAccountByIdentifier(identifier: string) {
-    return this.accountsRepository.findAccountByIdentifier(identifier);
+  findAccountById(accountId: string): Promise<WriteAccount> {
+    return this.accountsRepository.findAccountById(new Types.ObjectId(accountId));
   }
 }

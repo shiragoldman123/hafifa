@@ -1,15 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, ObjectId } from 'mongoose';
 import config from '../config/env.config';
-import { UserWrite } from 'src/user/schemas/userWrite.schema';
+import { UserRead } from 'src/user/userRead.schema';
 
-export type AccountDocument = Account & Document;
+export type AccountDocument = ReadAccount & Document;
 
 @Schema({
-  collection: config.mongo.accountsCollectionName,
+  collection: config.mongo.accountsReadCollectionName,
   versionKey: false,
 })
-export class Account {
+export class ReadAccount {
     @Prop({required: true, unique: true})
     identifier: string
 
@@ -19,8 +19,8 @@ export class Account {
     @Prop()
     email: string
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Users' })
-    user: UserWrite | ObjectId
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'users_view' })
+    user: UserRead | ObjectId
 }
 
-export const AccountSchema = SchemaFactory.createForClass(Account);
+export const AccountSchema = SchemaFactory.createForClass(ReadAccount);

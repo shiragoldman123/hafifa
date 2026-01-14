@@ -3,13 +3,13 @@ import mongoose, { Document, ObjectId } from 'mongoose';
 import config from '../config/env.config';
 import { UserWrite } from 'src/user/userWrite.schema';
 
-export type AccountDocument = Account & Document;
+export type AccountDocument = WriteAccount & Document;
 
 @Schema({
   collection: config.mongo.accountsCollectionName,
   versionKey: false,
 })
-export class Account {
+export class WriteAccount {
     @Prop({required: true, unique: true})
     identifier: string
 
@@ -23,4 +23,4 @@ export class Account {
     user: UserWrite | ObjectId
 }
 
-export const AccountSchema = SchemaFactory.createForClass(Account);
+export const AccountSchema = SchemaFactory.createForClass(WriteAccount);

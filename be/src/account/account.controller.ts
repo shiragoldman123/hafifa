@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Param, Patch, Post } from "@nestjs/common";
 import { AccountService } from "./account.service";
 import { CreateAccountDto, UpdateAccountDto } from "./account.dto";
 
@@ -16,13 +16,4 @@ export class AccountController {
         return this.accountService.updateAccountsEmail(accountId, email.email)
     }
 
-    @Get('')
-    findAllAccounts() {
-        return this.accountService.findAllAccounts();
-    }
-
-    @Get('source/:source')
-    findAllAcountsFromSource(@Param('source') source: string) {
-        return this.accountService.findAllAcountsFromSource(source)
-    }
 }

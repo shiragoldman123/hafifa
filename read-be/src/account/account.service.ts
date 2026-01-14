@@ -2,30 +2,30 @@ import { Injectable } from '@nestjs/common';
 import { AccountsRepository } from './account.repository';
 import { CreateAccountDto } from './account.dto';
 import { Types } from 'mongoose';
-import { Account } from './account.schema';
-import { UserWrite } from 'src/user/schemas/userWrite.schema';
+import { ReadAccount } from './account.schema';
+import { UserRead } from 'src/user/userRead.schema';
 
 @Injectable()
 export class AccountService {
   constructor(private readonly accountsRepository: AccountsRepository) {}
 
-  createAccount(accountDto: CreateAccountDto): Promise<Account> {
+  createAccount(accountDto: CreateAccountDto) {
     return this.accountsRepository.createAccount(accountDto);
   }
 
-  updateAccountsEmail(accountId: string, email: string): Promise<void> {
+  updateAccount(accountId: string, email: string): Promise<void> {
     return this.accountsRepository.updateAccountsEmail(new Types.ObjectId(accountId), email);
   }
 
-  findAllAcountsFromSource(source: string): Promise<Account[]> {
+  findAllAcountsFromSource(source: string): Promise<ReadAccount[]> {
     return this.accountsRepository.findAllAcountsFromSource(source);
   }
 
-  findUsersBySource(source: string): Promise<UserWrite[]> {
+  findUsersBySource(source: string): Promise<UserRead[]> {
     return this.accountsRepository.findUsersBySource(source);
   }
 
-  findAccountById(accountId: string): Promise<Account> {
+  findAccountById(accountId: string): Promise<ReadAccount> {
     return this.accountsRepository.findAccountById(new Types.ObjectId(accountId));
   }
 
@@ -39,7 +39,7 @@ export class AccountService {
     return this.accountsRepository.disconnectUserToAccount(new Types.ObjectId(accountId));
   }
 
-  findAllAccounts(): Promise<Account[]> {
+  findAllAccounts(): Promise<ReadAccount[]> {
     return this.accountsRepository.findAllAccounts();
   }
   

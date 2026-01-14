@@ -1,34 +1,26 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Account } from './account.schema';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ReadAccount } from './account.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CreateAccountDto } from './account.dto';
-import { UserWrite } from 'src/user/schemas/userWrite.schema';
+import { UserRead } from 'src/user/userRead.schema';
 
 @Injectable()
 export class AccountsRepository {
-  constructor(@InjectModel(Account.name) private readonly accountModel: Model<Account>) {}
-
-  async createAccount(accountDto: CreateAccountDto) {
-    try {
-      const createdAccount = new this.accountModel(accountDto);
-      return await createdAccount.save();
-    } catch (error: any) {
-      if (error.code === 11000) {
-        const field = Object.keys(error.keyPattern || {})[0];
-
-        if (field === 'identifier') {
-          throw new ConflictException('An account with this identifier already exists');
-        }
-
-        throw new ConflictException('An account with these details already exists');
-      }
-      throw error;
-    }
-  }
+  constructor(@InjectModel(ReadAccount.name) private readonly accountModel: Model<ReadAccount>) {}
 
   findAllAccounts() {
     return this.accountModel.find().lean();
+  }
+
+  createAccount(account: any) {
+     const { _id, ...updatableFields } = account;
+      
+       return this.accountModel.findByIdAndUpdate(
+        _id ,
+        { $set: updatableFields,
+         },
+        { upsert: true, new: true },
+      );
   }
 
   async connectUserToAccount(accountId: Types.ObjectId, userId: Types.ObjectId) {
@@ -43,14 +35,6 @@ export class AccountsRepository {
     const updatedAccount = await this.accountModel.findByIdAndUpdate(accountId, { $set: { user: null } });
 
     if (!updatedAccount) {
-      throw new NotFoundException(`Account not found with id ${accountId}`);
-    }
-  }
-
-  async updateAccountsEmail(accountId: Types.ObjectId, email: string) {
-    const result = await this.accountModel.findByIdAndUpdate(accountId, { $set: { email: email } });
-
-    if (!result) {
       throw new NotFoundException(`Account not found with id ${accountId}`);
     }
   }
@@ -70,7 +54,7 @@ export class AccountsRepository {
     return this.accountModel.findOne({ identifier }).exec();
   }
 
-async findUsersBySource(source: string): Promise<UserWrite[]> {
+async findUsersBySource(source: string): Promise<UserRead[]> {
   const users = await this.accountModel.aggregate([
     { 
       $match: { source } 
@@ -114,5 +98,13 @@ async findUsersBySource(source: string): Promise<UserWrite[]> {
 
   return users;
 }
+
+  async updateAccountsEmail(accountId: Types.ObjectId, email: string) {
+    const result = await this.accountModel.findByIdAndUpdate(accountId, { $set: { email: email } });
+
+    if (!result) {
+      throw new NotFoundException(`Account not found with id ${accountId}`);
+    }
+  }
 
 }

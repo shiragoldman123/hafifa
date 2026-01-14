@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, ObjectId } from 'mongoose';
-import { Account } from 'src/account/account.schema';
+import { WriteAccount } from 'src/account/account.schema';
 import config from 'src/config/env.config';
 import { Gender } from './user.dto';
 
@@ -29,8 +29,8 @@ export class UserWrite {
   @Prop({ required: true, enum: Gender })
   gender: string;
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: Account.name, required: false })
-  accounts: (ObjectId | Account)[];
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: WriteAccount.name, required: false })
+  accounts: (ObjectId | WriteAccount)[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserWrite);

@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsDate, IsEnum, Length, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 import mongoose, { ObjectId } from 'mongoose';
-import { Account } from 'src/account/account.schema';
+import { ReadAccount } from 'src/account/account.schema';
 
 export enum Gender {
   Male = 'male',
@@ -44,5 +44,5 @@ export class ExternalUser {
   identityCard: string;
   birthDate: Date;
   gender: string;
-  accounts: (mongoose.Schema.Types.ObjectId | Account)[];
+  accounts: (mongoose.Schema.Types.ObjectId | ReadAccount)[];
 }
