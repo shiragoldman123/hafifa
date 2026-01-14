@@ -1,17 +1,12 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CreateUserDto, ExternalUser } from './user.dto';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { CreateUserDto, } from './user.dto';
 import { UserWrite } from './userWrite.schema';
 
 @Injectable()
 export class UserWriteRepository {
-  private readonly logger = new Logger(UserWriteRepository.name);
-
-  constructor(  private readonly httpService: HttpService, 
+  constructor(  
     @InjectModel(UserWrite.name) private readonly userModel: Model<UserWrite>) {}
 
   async createUser(userDto: CreateUserDto) {
@@ -52,27 +47,10 @@ export class UserWriteRepository {
     }
   }
 
-  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
-  async syncUsers() {
-    this.logger.log('Starting user sync...');
-    try {
-      const response = await firstValueFrom(this.httpService.get<ExternalUser[]>('http://localhost:3000/users'));
-      const users = response.data;
-
-      for(const user of users) {
-         const { _id, identityCard, ...updatableFields } = user;
-
-          await this.userModel.updateOne(
-        { identityCard: user.identityCard },
-        { $set: updatableFields,
-           $setOnInsert: { identityCard },
-         },
-        { upsert: true },
-      );
-      }
-      this.logger.log('User sync completed successfully');
-    } catch (error: any) {
-       this.logger.error('Error syncing users:', error.message);
-    }
+    findUserById(userId: Types.ObjectId) {
+    return this.userModel
+      .findById(userId)
+      .orFail(new NotFoundException(`couldnt find user with id: ${userId}`))
+      .lean();
   }
 }

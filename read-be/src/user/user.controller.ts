@@ -1,15 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserInputDto } from './user.dto';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ReadUsersService } from './readUser.service';
+
 
 @Controller('/users')
 export class UserController {
-  constructor(private readonly usersService: UserService) {}
-
-  @Post('')
-  createUser(@Body() user: CreateUserInputDto) {
-    return this.usersService.createUser(user);
-  }
+  constructor(private readonly usersService: ReadUsersService) {}
 
   @Get('/identityCard/:identityCard')
   findUserByIdentityCard(@Param('identityCard') identityCard: string) {
@@ -34,15 +29,5 @@ export class UserController {
   @Get('/accounts/source/:source')
   findUsersWithSource(@Param('source') source: string) {
     return this.usersService.findUsersWithSource(source);
-  }
-
-  @Patch('/connect/account/:accountId/user/:userId')
-  connect(@Param('accountId') accountId: string, @Param('userId') userId: string) {
-    return this.usersService.connect(accountId, userId);
-  }
-
-  @Delete('/disconnect/account/:accountId/user/:userId')
-  diconnect(@Param('accountId') accountId: string, @Param('userId') userId: string) {
-    return this.usersService.disconnect(accountId, userId);
   }
 }

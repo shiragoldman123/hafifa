@@ -1,63 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserWriteRepository } from './userWrite.repository';
 import { CreateUserInputDto } from './user.dto';
 import { Types } from 'mongoose';
 import { AccountService } from 'src/account/account.service';
 import { UserWrite } from './userWrite.schema';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly usersRepository: UserWriteRepository,
     private readonly accountService: AccountService,
+    @Inject('RABBITMQ') private readonly rabbitmq: ClientProxy,
   ) {}
 
   createUser(user: CreateUserInputDto): Promise<UserWrite> {
-    return this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user });
-  }
+    const createdUser = this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user });
 
-  findUserByIdentityCard(identityCard: string): Promise<UserWrite> {
-    return this.usersRepository.findUserByIdentityCard(identityCard);
-  }
+    this.rabbitmq.emit('user.created', createdUser);
 
-  findUserByFullName(fullName: string): Promise<UserWrite[]> {
-    return this.usersRepository.findUserByFullName(fullName);
-  }
-
-  async findUsersPaginated(page: number, limit: number) {
-    const safePage = Math.max(1, page);
-    const safeLimit = Math.max(1, Math.min(limit, 100));
-    const skip = (safePage - 1) * safeLimit;
-
-    const { data, total } = await this.usersRepository.findUsersPaginated(skip, safeLimit);
-
-    const totalPages = Math.max(1, Math.ceil(total / safeLimit));
-
-    return {
-      data,
-      page: safePage,
-      limit: safeLimit,
-      total,
-      totalPages,
-    };
-  }
-
-  async findUserByAccountIdentifier(identifier: string): Promise<UserWrite> {
-    const account = await this.accountService.findAccountByIdentifier(identifier);
-
-    if (!account) {
-      throw new NotFoundException('Account not found');
-    }
-
-    if (!account.user) {
-      throw new NotFoundException('Account is not connected to any user');
-    }
-
-    return this.usersRepository.findUserByAccount(account?.id);
-  }
-
-  findUsersWithSource(source: string): Promise<UserWrite[]> {
-    return this.accountService.findUsersBySource(source);
+    return createdUser;
   }
 
   async connect(accountId: string, userId: string) {
@@ -69,6 +31,8 @@ export class UserService {
     try {
       await this.usersRepository.connectAccountToUser(accId, usrId);
       await this.accountService.connectUserToAccount(accountId, userId);
+
+      this.rabbitmq.emit('user.account.connected', { accountId, userId });
 
       return { ok: true };
     } catch (err) {
@@ -91,6 +55,9 @@ export class UserService {
     try {
       await this.usersRepository.disconnectAccountToUser(accId, usrId);
       await this.accountService.disconnectUserToAccount(accountId);
+
+      this.rabbitmq.emit('user.account.disconnected', { accountId, userId });
+
       return { ok: true };
     } catch (err) {
       throw err;

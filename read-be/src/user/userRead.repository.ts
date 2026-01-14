@@ -1,12 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserRead } from '../userRead.schema';
+import {  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { UserRead } from './userRead.schema';
+import {  ExternalUser } from './user.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class UserReadRepository {
-  constructor(@InjectModel(UserRead.name) private readonly userModel: Model<UserRead>) {}
-
+  constructor(private readonly httpService: HttpService, @InjectModel(UserRead.name) private readonly userModel: Model<UserRead>) {}
+  private readonly logger = new Logger(UserReadRepository.name);
+  
   findUserByIdentityCard(identityCard: string) {
     return this.userModel
       .findOne({ identityCard: identityCard })
@@ -44,5 +49,56 @@ export class UserReadRepository {
       .findById(userId)
       .orFail(new NotFoundException(`couldnt find user with id: ${userId}`))
       .lean();
+  }
+
+    async createUser(userDto: ExternalUser) {
+       const { _id, ...updatableFields } = userDto;
+      
+       return this.userModel.findByIdAndUpdate(
+        _id ,
+        { $set: updatableFields,
+         },
+        { upsert: true, new: true },
+      );
+  }
+
+  async connectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId) {
+    const result = await this.userModel.findByIdAndUpdate(userId, { $addToSet: { accounts: accountId } });
+
+    if (!result) {
+      throw new NotFoundException(`User not found with id ${userId}`);
+    }
+  }
+
+  async disconnectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId) {
+    const result = await this.userModel.findByIdAndUpdate(userId, { $pull: { accounts: accountId } });
+
+    if (!result) {
+      throw new NotFoundException(`User not found with id ${userId}`);
+    }
+  }
+
+    @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
+  async syncUsers() {
+    this.logger.log('Starting user sync...');
+    try {
+      const response = await firstValueFrom(this.httpService.get<ExternalUser[]>('http://localhost:3000/users'));
+      const users = response.data;
+
+      for(const user of users) {
+         const { _id, identityCard, ...updatableFields } = user;
+
+          await this.userModel.updateOne(
+        { identityCard: user.identityCard },
+        { $set: updatableFields,
+           $setOnInsert: { identityCard },
+         },
+        { upsert: true },
+      );
+      }
+      this.logger.log('User sync completed successfully');
+    } catch (error: any) {
+       this.logger.error('Error syncing users:', error.message);
+    }
   }
 }

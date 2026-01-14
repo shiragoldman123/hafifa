@@ -1,26 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserWriteRepository } from './repositories/userWrite.repository';
-import { CreateUserInputDto } from './user.dto';
-import { Types } from 'mongoose';
 import { AccountService } from 'src/account/account.service';
-import { UserWrite } from './schemas/userWrite.schema';
+import { UserReadRepository } from './userRead.repository';
+import { UserRead } from './userRead.schema';
+import { Types } from 'mongoose';
+import {  ExternalUser } from './user.dto';
 
 @Injectable()
-export class UserService {
+export class ReadUsersService {
   constructor(
-    private readonly usersRepository: UserWriteRepository,
+    private readonly usersRepository: UserReadRepository,
     private readonly accountService: AccountService,
   ) {}
 
-  createUser(user: CreateUserInputDto): Promise<UserWrite> {
-    return this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user });
-  }
 
-  findUserByIdentityCard(identityCard: string): Promise<UserWrite> {
+  findUserByIdentityCard(identityCard: string): Promise<UserRead> {
     return this.usersRepository.findUserByIdentityCard(identityCard);
   }
 
-  findUserByFullName(fullName: string): Promise<UserWrite[]> {
+  findUserByFullName(fullName: string): Promise<UserRead[]> {
     return this.usersRepository.findUserByFullName(fullName);
   }
 
@@ -42,7 +39,7 @@ export class UserService {
     };
   }
 
-  async findUserByAccountIdentifier(identifier: string): Promise<UserWrite> {
+  async findUserByAccountIdentifier(identifier: string): Promise<UserRead> {
     const account = await this.accountService.findAccountByIdentifier(identifier);
 
     if (!account) {
@@ -56,8 +53,12 @@ export class UserService {
     return this.usersRepository.findUserByAccount(account?.id);
   }
 
-  findUsersWithSource(source: string): Promise<UserWrite[]> {
+  findUsersWithSource(source: string): Promise<UserRead[]> {
     return this.accountService.findUsersBySource(source);
+  }
+
+    createUser(user: ExternalUser): Promise<UserRead> {
+    return this.usersRepository.createUser(user);
   }
 
   async connect(accountId: string, userId: string) {
@@ -91,6 +92,7 @@ export class UserService {
     try {
       await this.usersRepository.disconnectAccountToUser(accId, usrId);
       await this.accountService.disconnectUserToAccount(accountId);
+
       return { ok: true };
     } catch (err) {
       throw err;
