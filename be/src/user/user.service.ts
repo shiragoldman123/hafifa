@@ -1,23 +1,24 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserWriteRepository } from './userWrite.repository';
 import { CreateUserInputDto } from './user.dto';
 import { Types } from 'mongoose';
 import { AccountService } from 'src/account/account.service';
 import { UserWrite } from './userWrite.schema';
-import { ClientProxy } from '@nestjs/microservices';
+import { RabbitMQService } from 'src/rabbit/rabbitmq.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly usersRepository: UserWriteRepository,
     private readonly accountService: AccountService,
-    @Inject('RABBITMQ') private readonly rabbitmq: ClientProxy,
+    private readonly rabbitmq: RabbitMQService,
   ) {}
 
-  createUser(user: CreateUserInputDto): Promise<UserWrite> {
-    const createdUser = this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user });
+  async createUser(user: CreateUserInputDto): Promise<UserWrite> {
+    const createdUser = await this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user });
 
-    this.rabbitmq.emit('user.created', createdUser);
+    await firstValueFrom(this.rabbitmq.emit('user.created', createdUser));
 
     return createdUser;
   }
@@ -32,7 +33,7 @@ export class UserService {
       await this.usersRepository.connectAccountToUser(accId, usrId);
       await this.accountService.connectUserToAccount(accountId, userId);
 
-      this.rabbitmq.emit('user.account.connected', { accountId, userId });
+      await firstValueFrom(this.rabbitmq.emit('user.account.connected', { accountId, userId }));
 
       return { ok: true };
     } catch (err) {
@@ -56,7 +57,7 @@ export class UserService {
       await this.usersRepository.disconnectAccountToUser(accId, usrId);
       await this.accountService.disconnectUserToAccount(accountId);
 
-      this.rabbitmq.emit('user.account.disconnected', { accountId, userId });
+      await firstValueFrom(this.rabbitmq.emit('user.account.disconnected', { accountId, userId }));
 
       return { ok: true };
     } catch (err) {

@@ -1,8 +1,8 @@
 import { Account, CreateAccountInput, PopulatedAccount } from "../../types/account.types";
-import { apiRequest } from "../http";
+import { apiRequestRead, apiRequestWrite } from "../http";
 
 export function createAccount(input: CreateAccountInput) {
-  return apiRequest<Account>({
+  return apiRequestWrite<Account>({
     method: "POST",
     url: "accounts",
     data: input,
@@ -10,14 +10,14 @@ export function createAccount(input: CreateAccountInput) {
 }
 
 export function getAllAccounts() {
-  return apiRequest<PopulatedAccount[]>({
+  return apiRequestRead<PopulatedAccount[]>({
     method: "GET",
     url: "accounts"
   })
 }
 
 export function getAccountsFromSource(source: string) {
-  return apiRequest<PopulatedAccount[]>({
+  return apiRequestRead<PopulatedAccount[]>({
     method: "GET",
     url: `accounts/source/${source}`
   })

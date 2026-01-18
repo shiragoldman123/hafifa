@@ -14,6 +14,7 @@ export class UsersConsumer {
 
   @EventPattern('user.account.connected')
   async handleConnect(@Payload() data: { accountId: string; userId: string }) {
+    console.log("got to user consumer connect")
     await this.readUsersService.connect(data.accountId, data.userId);
   }
 

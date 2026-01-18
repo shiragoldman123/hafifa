@@ -1,10 +1,27 @@
-import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { usersKeys } from "./users.keys";
-import { connect, createUser, disconnect, findUserByAccountIdentifier, findUserByFullName, findUsersWithSource, getUsers} from "./users.api";
+import {
+  connect,
+  createUser,
+  disconnect,
+  findUserByAccountIdentifier,
+  findUserByFullName,
+  findUsersWithSource,
+  getUsers,
+} from "./users.api";
 import { CreateInputUser } from "../../types/user.types";
 import { accountsKeys } from "../accounts/accounts.keys";
 
-export function useUsers(params: { page: number; limit: number; search?: string }) {
+export function useUsers(params: {
+  page: number;
+  limit: number;
+  search?: string;
+}) {
   return useQuery({
     queryKey: usersKeys.list(params),
     queryFn: () => getUsers(params),
@@ -22,9 +39,41 @@ export function useUsers(params: { page: number; limit: number; search?: string 
 export function useConnect() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ accountId, userId }: { accountId: string; userId: string }) => 
-      connect(accountId, userId),
-    onSuccess: () => {
+    mutationFn: ({
+      accountId,
+      userId,
+    }: {
+      accountId: string;
+      userId: string;
+    }) => connect(accountId, userId),
+     onMutate: async ({ accountId, userId }) => {
+      await qc.cancelQueries({ queryKey: accountsKeys.all });
+      qc.setQueriesData({ queryKey: accountsKeys.all }, (old: any) => {
+        if (!old) return old;
+        if (Array.isArray(old)) {
+          return old.map(account => 
+            account._id === accountId 
+              ? { ...account, user: userId }
+              : account
+          );
+        }
+
+        if (old.data) {
+          return {
+            ...old,
+            data: old.data.map((account: any) => 
+              account._id === accountId 
+                ? { ...account, user: userId }
+                : account
+            )
+          };
+        }
+        
+        return old;
+      });
+    },
+    onSuccess: async () => {
+  await new Promise(resolve => setTimeout(resolve, 500));
       qc.invalidateQueries({ queryKey: accountsKeys.all });
       qc.invalidateQueries({ queryKey: usersKeys.all });
     },
@@ -34,9 +83,42 @@ export function useConnect() {
 export function useDisconnect() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ accountId, userId }: { accountId: string; userId: string }) => 
-      disconnect(accountId, userId),
-    onSuccess: () => {
+    mutationFn: ({
+      accountId,
+      userId,
+    }: {
+      accountId: string;
+      userId: string;
+    }) => disconnect(accountId, userId),
+    onMutate: async ({ accountId, userId }) => {
+      await qc.cancelQueries({ queryKey: accountsKeys.all });
+      qc.setQueriesData({ queryKey: accountsKeys.all }, (old: any) => {
+        if (!old) return old;
+        if (Array.isArray(old)) {
+          return old.map(account => 
+            account._id === accountId 
+              ? { ...account, user: null }
+              : account
+          );
+        }
+        
+        if (old.data) {
+          return {
+            ...old,
+            data: old.data.map((account: any) => 
+              account._id === accountId 
+                ? { ...account, user: null }
+                : account
+            )
+          };
+        }
+        
+        return old;
+      });
+    },
+    onSuccess: async () => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+
       qc.invalidateQueries({ queryKey: accountsKeys.all });
       qc.invalidateQueries({ queryKey: usersKeys.all });
     },
@@ -58,24 +140,26 @@ export function useFindUsersByFullName(fullName: string | null) {
     queryKey: usersKeys.byFullName(fullName),
     queryFn: () => {
       if (!fullName) {
-        throw new Error('Full name is required');
+        throw new Error("Full name is required");
       }
       return findUserByFullName(fullName);
     },
-    enabled: !!fullName
+    enabled: !!fullName,
   });
 }
 
-export function useFindUserByAccountIdentifier(accountIdentifier: string | null) {
+export function useFindUserByAccountIdentifier(
+  accountIdentifier: string | null
+) {
   return useQuery({
     queryKey: usersKeys.byAccountIdentifier(accountIdentifier),
     queryFn: () => {
       if (!accountIdentifier) {
-        throw new Error('Account identifier is required');
+        throw new Error("Account identifier is required");
       }
       return findUserByAccountIdentifier(accountIdentifier);
     },
-    enabled: !!accountIdentifier
+    enabled: !!accountIdentifier,
   });
 }
 
@@ -84,10 +168,10 @@ export function useFindUserWithSource(source: string | null) {
     queryKey: usersKeys.bySource(source),
     queryFn: () => {
       if (!source) {
-        throw new Error('Source is required');
+        throw new Error("Source is required");
       }
       return findUsersWithSource(source);
     },
-    enabled: !!source
+    enabled: !!source,
   });
 }

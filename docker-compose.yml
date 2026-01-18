@@ -15,6 +15,21 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: userly-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    
+      - "15672:15672"  
+    networks:
+      - userly-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./be
@@ -31,16 +46,19 @@ services:
       - UPDATE_CRON=0 0 12 * * *
       - NODE_ENV=production
       - SYSTEM_NAME=userly
-      - SERVICE_NAME=userly-es
+      - SERVICE_NAME=userly-write
       - DESCRIPTION=tracking user data
       - SOURCE_TIMEOUT=10000
+      - RABBITMQ_URL=amqp://rabbitmq:5672
     depends_on:
       mongodb:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - userly-network
-  
-    backend:
+
+  read-backend:
     build:
       context: ./read-be
       dockerfile: Dockerfile
@@ -51,16 +69,19 @@ services:
     environment:
       - PORT=3002
       - MONGO_URI=${MONGO_URI}
-      - USERS_VIEW_COLLECTION_NAME = users_view
-      - ACCOUNTS_VIEW_COLLECTION_NAME = accounts_view
+      - USERS_VIEW_COLLECTION_NAME=users_view
+      - ACCOUNTS_VIEW_COLLECTION_NAME=accounts_view
       - UPDATE_CRON=0 0 12 * * *
       - NODE_ENV=production
       - SYSTEM_NAME=userly
-      - SERVICE_NAME=userly-es
+      - SERVICE_NAME=userly-read
       - DESCRIPTION=tracking user data
       - SOURCE_TIMEOUT=10000
+      - RABBITMQ_URL=amqp://rabbitmq:5672
     depends_on:
       mongodb:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - userly-network
@@ -70,13 +91,13 @@ services:
       context: ./fe
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=http://localhost:3001/api
+        - VITE_API_URL=http://localhost:3002/api
     container_name: userly-frontend
     restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      - read-backend
     networks:
       - userly-network
 

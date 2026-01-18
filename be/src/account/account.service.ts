@@ -1,29 +1,30 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AccountsRepository } from './account.repository';
 import { CreateAccountDto } from './account.dto';
 import { Types } from 'mongoose';
 import { WriteAccount } from './account.schema';
-import { ClientProxy } from '@nestjs/microservices';
+import { RabbitMQService } from 'src/rabbit/rabbitmq.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AccountService {
   constructor(
     private readonly accountsRepository: AccountsRepository,
-    @Inject('RABBITMQ') private readonly rabbitmq: ClientProxy,
+    private readonly rabbitmq: RabbitMQService,
   ) {}
 
-  createAccount(accountDto: CreateAccountDto): Promise<WriteAccount> {
-    const account = this.accountsRepository.createAccount(accountDto);
+  async createAccount(accountDto: CreateAccountDto): Promise<WriteAccount> {
+    const account = await this.accountsRepository.createAccount(accountDto);
 
-    this.rabbitmq.emit('account.create', account);
+    await firstValueFrom(this.rabbitmq.emit('account.create', account));
 
     return account;
   }
 
-  updateAccountsEmail(accountId: string, email: string): Promise<void> {
-    const account = this.accountsRepository.updateAccountsEmail(new Types.ObjectId(accountId), email);
+  async updateAccountsEmail(accountId: string, email: string): Promise<void> {
+    const account = await this.accountsRepository.updateAccountsEmail(new Types.ObjectId(accountId), email);
 
-    this.rabbitmq.emit('account.update', account)
+    await firstValueFrom(this.rabbitmq.emit('account.update', account));
 
     return account
   }

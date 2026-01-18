@@ -4,12 +4,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import envConfig from './config/env.config';
 import { AccountModule } from './account/account.module';
-import { UsersConsumer } from './user/user.consumer';
-import { AccountConsumer } from './account/account.consumer';
 
 @Module({
   imports: [ScheduleModule.forRoot(), MongooseModule.forRoot(envConfig.mongo.uri), UserModule, AccountModule],
-  controllers: [UsersConsumer, AccountConsumer]
 })
 export class AppModule  {}
 

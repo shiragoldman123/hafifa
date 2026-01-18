@@ -7,20 +7,18 @@ import { rabbitMQConfig } from 'src/config/rabbitmq.config';
   imports: [
     ClientsModule.register([
       {
-        name: 'nest_template_rabbit',
+        name: 'RABBITMQ',
         transport: Transport.RMQ,
         options: {
           urls: rabbitMQConfig.urls,
           queue: rabbitMQConfig.queue,
-          noAck: false,
-          queueOptions: {
-            durable: true,
-          },
+          queueOptions: { durable: true },
         },
       },
     ]),
   ],
-  exports: [RabbitMQService],
   providers: [RabbitMQService],
+  exports: [RabbitMQService], 
 })
-export default class RabbitMQModule {}
+export class RabbitMQModule {}
+
