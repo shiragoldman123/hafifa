@@ -5,7 +5,6 @@ import { Types } from 'mongoose';
 import { AccountService } from 'src/account/account.service';
 import { UserWrite } from './userWrite.schema';
 import { RabbitMQService } from 'src/rabbit/rabbitmq.service';
-import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserService {
@@ -18,7 +17,7 @@ export class UserService {
   async createUser(user: CreateUserInputDto): Promise<UserWrite> {
     const createdUser = await this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user });
 
-    await firstValueFrom(this.rabbitmq.emit('user.created', createdUser));
+    this.rabbitmq.publishMessageToQueue('user.created', createdUser);
 
     return createdUser;
   }
@@ -33,7 +32,7 @@ export class UserService {
       await this.usersRepository.connectAccountToUser(accId, usrId);
       await this.accountService.connectUserToAccount(accountId, userId);
 
-      await firstValueFrom(this.rabbitmq.emit('user.account.connected', { accountId, userId }));
+      this.rabbitmq.publishMessageToQueue('user.account.connected', { accountId, userId });
 
       return { ok: true };
     } catch (err) {
@@ -57,7 +56,7 @@ export class UserService {
       await this.usersRepository.disconnectAccountToUser(accId, usrId);
       await this.accountService.disconnectUserToAccount(accountId);
 
-      await firstValueFrom(this.rabbitmq.emit('user.account.disconnected', { accountId, userId }));
+      this.rabbitmq.publishMessageToQueue('user.account.disconnected', { accountId, userId });
 
       return { ok: true };
     } catch (err) {

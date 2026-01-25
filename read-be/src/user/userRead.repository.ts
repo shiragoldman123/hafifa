@@ -54,28 +54,33 @@ export class UserReadRepository {
     async createUser(userDto: ExternalUser) {
        const { _id, ...updatableFields } = userDto;
       
-       return this.userModel.findByIdAndUpdate(
+       const user = await this.userModel.findByIdAndUpdate(
         _id ,
         { $set: updatableFields,
          },
         { upsert: true, new: true },
       );
+
+      return user.populate('accounts');
   }
 
   async connectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId) {
-    const result = await this.userModel.findByIdAndUpdate(userId, { $addToSet: { accounts: accountId } });
+    const result = await this.userModel.findByIdAndUpdate(userId, { $addToSet: { accounts: accountId } }, {new : true});
 
     if (!result) {
       throw new NotFoundException(`User not found with id ${userId}`);
     }
+
+    return result;
   }
 
   async disconnectAccountToUser(accountId: Types.ObjectId, userId: Types.ObjectId) {
-    const result = await this.userModel.findByIdAndUpdate(userId, { $pull: { accounts: accountId } });
+    const result = await this.userModel.findByIdAndUpdate(userId, { $pull: { accounts: accountId } }, {new : true});
 
     if (!result) {
       throw new NotFoundException(`User not found with id ${userId}`);
     }
+    return result;
   }
 
     @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)

@@ -1,19 +1,21 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
-
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit {
   constructor(@Inject('RABBITMQ') private readonly client: ClientProxy) {}
 
   async onModuleInit() {
-    await this.client.connect();
-    console.log('RabbitMQ connected');
+    try {
+      await this.client.connect();
+      console.log('RabbitMQ connected');
+    } catch (err: any) {
+      console.log(`connection failed: ${err.message}`);
+    }
   }
 
-  public emit(pattern: string, data: any): Observable<any> {
+  public publishMessageToQueue(pattern: string, data: any) {
     console.log(`Emitting: ${pattern}`, data);
-    return this.client.emit(pattern, data);
+    this.client.emit(pattern, data).subscribe();  
   }
 }

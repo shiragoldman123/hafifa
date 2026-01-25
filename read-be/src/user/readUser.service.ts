@@ -4,12 +4,14 @@ import { UserReadRepository } from './userRead.repository';
 import { UserRead } from './userRead.schema';
 import { Types } from 'mongoose';
 import {  ExternalUser } from './user.dto';
+import { SearchService } from 'src/elasticsearch/elasticsearch.service';
 
 @Injectable()
 export class ReadUsersService {
   constructor(
     private readonly usersRepository: UserReadRepository,
     private readonly accountService: AccountService,
+    private readonly searchService : SearchService
   ) {}
 
 
@@ -98,4 +100,67 @@ export class ReadUsersService {
       throw err;
     }
   }
+
+async search(query: string) {
+  return await this.searchService.search('users', {
+    query: {
+      bool: {
+        should: [
+          {
+            match: {
+              fullName: {
+                query,
+                fuzziness: 'AUTO',
+                boost: 3,
+              },
+            },
+          },
+          {
+            match: {
+              firstName: {
+                query,
+                fuzziness: 'AUTO',
+                boost: 2,
+              },
+            },
+          },
+          {
+            match: {
+              lastName: {
+                query,
+                fuzziness: 'AUTO',
+                boost: 2,
+              },
+            },
+          },
+          {
+            nested: {
+              path: 'accounts',
+              query: {
+                wildcard: {
+                  'accounts.identifier': `*${query}*`,
+                },
+              },
+            },
+          },
+          {
+            nested: {
+              path: 'accounts', 
+              query: {
+                match: {
+                  'accounts.source': { 
+                    query,
+                    fuzziness: 'AUTO',
+                    boost: 1.5,
+                  },
+                },
+              },
+            },
+          },
+        ],
+        minimum_should_match: 1,
+      },
+    },
+  });
+}
 }

@@ -1,7 +1,16 @@
-import { CreateInputUser, Paginated, PopulatedUser, User } from "../../types/user.types";
-import {  apiClientWrite, apiRequestRead, apiRequestWrite } from "../http";
+import {
+  CreateInputUser,
+  Paginated,
+  PopulatedUser,
+  User,
+} from "../../types/user.types";
+import { apiClientWrite, apiRequestRead, apiRequestWrite } from "../http";
 
-export function getUsers(params: { page: number; limit: number; search?: string }) {
+export function getUsers(params: {
+  page: number;
+  limit: number;
+  search?: string;
+}) {
   return apiRequestRead<Paginated<PopulatedUser>>({
     method: "GET",
     url: "users",
@@ -16,15 +25,15 @@ export function getUsers(params: { page: number; limit: number; search?: string 
 export function disconnect(accountId: string, userId: string) {
   return apiRequestWrite<void>({
     method: "DELETE",
-    url: `users/disconnect/account/${accountId}/user/${userId}`
-  })
+    url: `users/disconnect/account/${accountId}/user/${userId}`,
+  });
 }
 
 export function connect(accountId: string, userId: string) {
   return apiRequestWrite<void>({
     method: "PATCH",
-    url: `users/connect/account/${accountId}/user/${userId}`
-  })
+    url: `users/connect/account/${accountId}/user/${userId}`,
+  });
 }
 
 export function createUser(input: CreateInputUser) {
@@ -35,23 +44,12 @@ export function createUser(input: CreateInputUser) {
   });
 }
 
-export function findUserByFullName(fullName: string) {
-  return apiRequestRead<PopulatedUser[]>({
-    method:"GET",
-    url: `users/fullName/${fullName}`
-  });
-}
+export function searchUsers(query: string) {
+  if (!query) return [];
 
-export function findUserByAccountIdentifier(identifier: string) {
-  return apiRequestRead<PopulatedUser>({
-    method:"GET",
-    url: `users/account/identifier/${identifier}`
-  });
-}
-
-export function findUsersWithSource(source: string) {
   return apiRequestRead<PopulatedUser[]>({
     method: "GET",
-    url: `users/accounts/source/${source}`
+    url: "/users/search",
+    params: { q: query },
   });
 }

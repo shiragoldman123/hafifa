@@ -13,17 +13,17 @@ export function useCreateAccount() {
   });
 }
 
-export function useGetAllAccounts() {
-  return useQuery({
-    queryKey: accountsKeys.lists(),
-    queryFn: () => getAllAccounts()
-  });
-}
-
-export function useGetAccountsBySource(source: string | null) {
-  return useQuery({
+export function useGetAccounts(source: string | null) {
+  if (source) {
+     return useQuery({
         queryKey: accountsKeys.bySource(source),
         queryFn: () => getAccountsFromSource(source!),
         enabled: !!source
   })
+  } else {
+      return useQuery({
+    queryKey: accountsKeys.lists(),
+    queryFn: () => getAllAccounts()
+  });
+  }
 }

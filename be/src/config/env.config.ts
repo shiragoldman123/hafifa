@@ -21,6 +21,15 @@ const config = {
     serviceName: env.get('SERVICE_NAME').required().asString(),
     description: env.get('DESCRIPTION').required().asString(),
   },
+  rabbit: {
+    urls: [env.get('RABBIT_URLS').required().asUrlString()],
+    queue: env.get('RABBIT_QUEUE').required().asString(),
+    // TODO- write it in env file
+    queueOptions: {
+      durable: true,
+    },
+  },
+  
 };
 
 export default config;

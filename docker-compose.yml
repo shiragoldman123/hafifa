@@ -30,6 +30,27 @@ services:
       timeout: 5s
       retries: 10
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: userly-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - userly-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./be
@@ -50,10 +71,15 @@ services:
       - DESCRIPTION=tracking user data
       - SOURCE_TIMEOUT=10000
       - RABBITMQ_URL=amqp://rabbitmq:5672
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200  
+      - RABBIT_URLS=amqp://rabbitmq:5672
+      - RABBIT_QUEUE=events_queue
     depends_on:
       mongodb:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      elasticsearch:  
         condition: service_healthy
     networks:
       - userly-network
@@ -78,10 +104,15 @@ services:
       - DESCRIPTION=tracking user data
       - SOURCE_TIMEOUT=10000
       - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBIT_URLS=amqp://rabbitmq:5672
+      - RABBIT_QUEUE=events_queue
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200  
     depends_on:
       mongodb:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      elasticsearch: 
         condition: service_healthy
     networks:
       - userly-network
@@ -103,6 +134,8 @@ services:
 
 volumes:
   mongodb_data:
+    driver: local
+  elasticsearch_data:  
     driver: local
 
 networks:

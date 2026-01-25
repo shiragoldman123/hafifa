@@ -9,12 +9,10 @@ import {
   connect,
   createUser,
   disconnect,
-  findUserByAccountIdentifier,
-  findUserByFullName,
-  findUsersWithSource,
   getUsers,
+  searchUsers,
 } from "./users.api";
-import { CreateInputUser } from "../../types/user.types";
+import { CreateInputUser, PopulatedUser } from "../../types/user.types";
 import { accountsKeys } from "../accounts/accounts.keys";
 
 export function useUsers(params: {
@@ -135,43 +133,11 @@ export function useCreateUser() {
   });
 }
 
-export function useFindUsersByFullName(fullName: string | null) {
-  return useQuery({
-    queryKey: usersKeys.byFullName(fullName),
-    queryFn: () => {
-      if (!fullName) {
-        throw new Error("Full name is required");
-      }
-      return findUserByFullName(fullName);
-    },
-    enabled: !!fullName,
-  });
-}
 
-export function useFindUserByAccountIdentifier(
-  accountIdentifier: string | null
-) {
+export function useSearchUsers(query: string | null) {
   return useQuery({
-    queryKey: usersKeys.byAccountIdentifier(accountIdentifier),
-    queryFn: () => {
-      if (!accountIdentifier) {
-        throw new Error("Account identifier is required");
-      }
-      return findUserByAccountIdentifier(accountIdentifier);
-    },
-    enabled: !!accountIdentifier,
-  });
-}
-
-export function useFindUserWithSource(source: string | null) {
-  return useQuery({
-    queryKey: usersKeys.bySource(source),
-    queryFn: () => {
-      if (!source) {
-        throw new Error("Source is required");
-      }
-      return findUsersWithSource(source);
-    },
-    enabled: !!source,
+    queryKey: ['users', 'search', query],
+    queryFn: () => searchUsers(query!),
+    enabled: !!query,
   });
 }

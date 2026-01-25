@@ -1,5 +1,5 @@
 import './App.css'
-import CreateBtn from './components/CreateBtn/CreateBtn';
+import CreateEntityBtn from './components/CreateBtn/CreateEntityBtn';
 import Navbar from './components/Navbar/Navbar'
 import UserDisplay from './components/UserDisplay/UserDisplay'
 import Box from "@mui/material/Box";
@@ -37,7 +37,7 @@ return (
           pb: 2,
         }}
       >
-        <CreateBtn />
+        <CreateEntityBtn />
       </Box>
     </Box>
   </>

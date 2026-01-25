@@ -4,9 +4,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import envConfig from './config/env.config';
 import { AccountModule } from './account/account.module';
+import { ElasticsearchModule } from './elasticsearch/elasticsearch.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), MongooseModule.forRoot(envConfig.mongo.uri), UserModule, AccountModule],
+  imports: [ScheduleModule.forRoot(), MongooseModule.forRoot(envConfig.mongo.uri), UserModule, AccountModule, ElasticsearchModule],
 })
 export class AppModule  {}
 

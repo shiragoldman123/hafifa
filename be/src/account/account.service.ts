@@ -4,7 +4,6 @@ import { CreateAccountDto } from './account.dto';
 import { Types } from 'mongoose';
 import { WriteAccount } from './account.schema';
 import { RabbitMQService } from 'src/rabbit/rabbitmq.service';
-import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AccountService {
@@ -16,7 +15,7 @@ export class AccountService {
   async createAccount(accountDto: CreateAccountDto): Promise<WriteAccount> {
     const account = await this.accountsRepository.createAccount(accountDto);
 
-    await firstValueFrom(this.rabbitmq.emit('account.create', account));
+this.rabbitmq.publishMessageToQueue('account.create', account);
 
     return account;
   }
@@ -24,7 +23,7 @@ export class AccountService {
   async updateAccountsEmail(accountId: string, email: string): Promise<void> {
     const account = await this.accountsRepository.updateAccountsEmail(new Types.ObjectId(accountId), email);
 
-    await firstValueFrom(this.rabbitmq.emit('account.update', account));
+  this.rabbitmq.publishMessageToQueue('account.update', account);
 
     return account
   }

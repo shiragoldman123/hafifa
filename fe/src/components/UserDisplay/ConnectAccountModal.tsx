@@ -15,9 +15,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import IconButton from "@mui/material/IconButton";
 import LinkIcon from "@mui/icons-material/Link";
-import { useGetAllAccounts, useGetAccountsBySource } from "../../api/accounts/accounts.hooks";
 import { useConnect } from "../../api/users/user.hooks";
-import { Account, PopulatedAccount } from "../../types/account.types";
+import { Account } from "../../types/account.types";
+import { useGetAccounts } from "../../api/accounts/accounts.hooks";
 
 interface ConnectAccountModalProps {
   userId: string;
@@ -31,17 +31,13 @@ export default function ConnectAccountModal({ userId, userName }: ConnectAccount
 
   const connect = useConnect();
 
-  const { data: allAccounts, isLoading: allAccountsLoading } = useGetAllAccounts();
-  const { data: filteredAccounts, isLoading: filteredLoading } = useGetAccountsBySource(activeFilter);
-
-  const accounts = activeFilter ? filteredAccounts : allAccounts;
-  const isLoading = activeFilter ? filteredLoading : allAccountsLoading;
+  const { data: accounts, isLoading: accountsLoading} = useGetAccounts(activeFilter)
 
   const uniqueSources = React.useMemo(() => {
-    if (!allAccounts) return [];
-    const sources = new Set(allAccounts.map((acc: Account) => acc.source));
+    if (!accounts) return [];
+    const sources = new Set(accounts.map((acc: Account) => acc.source));
     return Array.from(sources);
-  }, [allAccounts]);
+  }, [accounts]);
 
   const handleOpen = () => setOpen(true);
   
@@ -165,7 +161,7 @@ export default function ConnectAccountModal({ userId, userName }: ConnectAccount
             )}
           </Box>
 
-          {isLoading ? (
+          {accountsLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
               <CircularProgress />
             </Box>

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RabbitMQService } from './rabbitmq.service';
-import { rabbitMQConfig } from 'src/config/rabbitmq.config';
+import envConfig from 'src/config/env.config';
 
 @Module({
   imports: [
@@ -10,9 +10,9 @@ import { rabbitMQConfig } from 'src/config/rabbitmq.config';
         name: 'RABBITMQ',
         transport: Transport.RMQ,
         options: {
-          urls: rabbitMQConfig.urls,
-          queue: rabbitMQConfig.queue,
-          queueOptions: { durable: true },
+          urls: envConfig.rabbit.urls,
+          queue: envConfig.rabbit.queue,
+          queueOptions: envConfig.rabbit.queueOptions,
         },
       },
     ]),

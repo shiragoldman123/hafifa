@@ -19,14 +19,12 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 
-import { useUsers, useFindUsersByFullName, useFindUserWithSource, useFindUserByAccountIdentifier } from "../../api/users/user.hooks";
+import { useUsers, useSearchUsers } from "../../api/users/user.hooks";
 import { PopulatedUser } from "../../types/user.types";
 import MenuItem from "@mui/material/MenuItem";
 import AccountsSection from "./AccountsSection";
 import ConnectAccountModal from "./ConnectAccountModal";
 import InputAdornment from "@mui/material/InputAdornment";
-
-type SearchType = "fullName" | "source" | "accountIdentifier" | "";
 
 export default function UserDisplay() {
   const [page, setPage] = useState(1);
@@ -34,7 +32,6 @@ export default function UserDisplay() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Search state
-  const [searchType, setSearchType] = useState<SearchType>("");
   const [searchInput, setSearchInput] = useState("");
   const [activeSearch, setActiveSearch] = useState<string | null>(null);
 
@@ -42,31 +39,15 @@ export default function UserDisplay() {
   const apiParams = useMemo(() => ({ page, limit }), [page, limit]);
   const { data: paginatedData, isPending, isFetching, isError, error } = useUsers(apiParams);
 
-  // Search queries
-  const { data: fullNameResults, isLoading: isLoadingFullName } = useFindUsersByFullName(
-    searchType === "fullName" ? activeSearch : null
-  );
-  const { data: sourceResults, isLoading: isLoadingSource } = useFindUserWithSource(
-    searchType === "source" ? activeSearch : null
-  );
-  const { data: accountIdentifierResult, isLoading: isLoadingAccountIdentifier } = useFindUserByAccountIdentifier(
-    searchType === "accountIdentifier" ? activeSearch : null
-  );
+  const { data: searchResults, isLoading: isSearchLoading } = useSearchUsers(activeSearch);
 
-  const isSearchActive = !!activeSearch && !!searchType;
-  const isSearchLoading = isLoadingFullName || isLoadingSource || isLoadingAccountIdentifier;
+  const isSearchActive = !!activeSearch;
 
   let displayUsers: PopulatedUser[] = [];
   let totalPages = 1;
 
   if (isSearchActive) {
-    if (searchType === "fullName" && fullNameResults) {
-      displayUsers = Array.isArray(fullNameResults) ? fullNameResults : [fullNameResults];
-    } else if (searchType === "source" && sourceResults) {
-      displayUsers = Array.isArray(sourceResults) ? sourceResults : [sourceResults];
-    } else if (searchType === "accountIdentifier" && accountIdentifierResult) {
-      displayUsers = Array.isArray(accountIdentifierResult) ? accountIdentifierResult : [accountIdentifierResult];
-    }
+    displayUsers = searchResults ?? [];
     totalPages = 1; 
   } else {
     displayUsers = paginatedData?.data ?? [];
@@ -78,7 +59,7 @@ export default function UserDisplay() {
   };
 
   const handleSearch = () => {
-    if (!searchType || !searchInput.trim()) {
+    if (!searchInput.trim()) {
       return;
     }
     setActiveSearch(searchInput.trim());
@@ -86,7 +67,6 @@ export default function UserDisplay() {
   };
 
   const handleClearSearch = () => {
-    setSearchType("");
     setSearchInput("");
     setActiveSearch(null);
     setExpandedId(null);
@@ -97,12 +77,6 @@ export default function UserDisplay() {
     if (event.key === 'Enter') {
       handleSearch();
     }
-  };
-
-  const handleSearchTypeChange = (value: SearchType) => {
-    setSearchType(value);
-    setSearchInput("");
-    setActiveSearch(null);
   };
 
   return (
@@ -117,44 +91,23 @@ export default function UserDisplay() {
       {/* Search Section */}
       <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 3 }}>
         <TextField
-          select
-          label="Search By"
-          size="small"
-          value={searchType}
-          onChange={(e) => handleSearchTypeChange(e.target.value as SearchType)}
-          sx={{ minWidth: 180 }}
-        >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-          <MenuItem value="fullName">Full Name</MenuItem>
-          <MenuItem value="source">Source</MenuItem>
-          <MenuItem value="accountIdentifier">Account Identifier</MenuItem>
-        </TextField>
-
-        <TextField
-          label="Search Input"
+          label="Search Users"
           size="small"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={handleKeyPress}
-          disabled={!searchType}
-          placeholder={
-            searchType === "fullName" ? "Enter full name..." :
-            searchType === "source" ? "Enter source (e.g., Google)..." :
-            searchType === "accountIdentifier" ? "Enter account identifier..." :
-            "Select search type first"
-          }
-          sx={{ minWidth: 250 }}
+          placeholder="Search by name, identifier, or source..."
+          sx={{ minWidth: 350 }}
           slotProps={{
-            input: 
-           { endAdornment: activeSearch && (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={handleClearSearch}>
-                  <ClearIcon />
-                </IconButton>
-              </InputAdornment>
-            )},
+            input: {
+              endAdornment: activeSearch && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClearSearch}>
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         />
 
@@ -162,7 +115,7 @@ export default function UserDisplay() {
           variant="contained"
           startIcon={<SearchIcon />}
           onClick={handleSearch}
-          disabled={!searchType || !searchInput.trim()}
+          disabled={!searchInput.trim()}
         >
           Search
         </Button>
@@ -180,7 +133,7 @@ export default function UserDisplay() {
 
       {activeSearch && (
         <Alert severity="info" sx={{ mb: 2, width: "80%" }}>
-          Showing results for <strong>{searchType}</strong>: "{activeSearch}"
+          Showing results for: "<strong>{activeSearch}</strong>"
         </Alert>
       )}
 

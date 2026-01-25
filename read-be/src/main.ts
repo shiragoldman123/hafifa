@@ -3,7 +3,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import logger from 'morgan';
 import { AppModule } from './app.module';
 import envConfig from './config/env.config';
-import { rabbitMQConfig } from './config/rabbitmq.config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
@@ -15,9 +14,9 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
-      urls: rabbitMQConfig.urls,
-      queue: rabbitMQConfig.queue,
-      queueOptions: rabbitMQConfig.queueOptions,
+      urls: envConfig.rabbit.urls,
+      queue: envConfig.rabbit.queue,
+      queueOptions: envConfig.rabbit.queueOptions,
     },
   });
 

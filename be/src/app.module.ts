@@ -7,7 +7,7 @@ import { AccountModule } from './account/account.module';
 import { RabbitMQModule } from './rabbit/rabbit.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), MongooseModule.forRoot(envConfig.mongo.uri), UserModule, AccountModule, RabbitMQModule],
+  imports: [ScheduleModule.forRoot(), MongooseModule.forRoot(envConfig.mongo.uri), UserModule, AccountModule, RabbitMQModule,],
 })
 export class AppModule  {}
 
