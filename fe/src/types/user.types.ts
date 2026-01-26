@@ -1,8 +1,8 @@
 import { Account } from "./account.types";
 
-enum Gender {
-    female,
-    male
+export enum Gender {
+    FEMALE = "female",
+    MALE = "male"
 }
 
 export type User = {
@@ -26,3 +26,5 @@ export type Paginated<T> = {
 export type PopulatedUser = User & {
     accounts: Account[];
 }
+
+export type CreateInputUser = Omit<User, 'fullName' | '_id'>

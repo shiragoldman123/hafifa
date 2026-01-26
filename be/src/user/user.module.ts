@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './user.schema';
-import { UserRepository } from '../user/user.repository';
+import { UserWriteRepository } from './userWrite.repository';
 import { UserController } from './user.controller';
 import { AccountModule } from 'src/account/account.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { HttpModule } from '@nestjs/axios';
+import { UserWrite, UserSchema } from './userWrite.schema';
+import { RabbitMQModule } from 'src/rabbit/rabbit.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),  AccountModule],
+  imports: [MongooseModule.forFeature([{ name: UserWrite.name, schema: UserSchema }]),  AccountModule, ScheduleModule.forRoot(), HttpModule, RabbitMQModule],
   controllers: [UserController],
-  providers: [UserService, UserRepository],
+  providers: [UserService, UserWriteRepository],
 })
 export class UserModule {}

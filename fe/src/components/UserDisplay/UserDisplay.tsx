@@ -10,61 +10,73 @@ import CardContent from "@mui/material/CardContent";
 import IconButton from "@mui/material/IconButton";
 import Collapse from "@mui/material/Collapse";
 import Typography from "@mui/material/Typography";
-import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 
-import { useUsers } from "../../api/users/user.hooks";
+import { useUsers, useSearchUsers } from "../../api/users/user.hooks";
 import { PopulatedUser } from "../../types/user.types";
 import MenuItem from "@mui/material/MenuItem";
-
-function AccountsSection({ accounts }: { accounts: any[] }) {
-  if (!accounts || accounts.length === 0) {
-    return (
-      <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
-        No accounts
-      </Typography>
-    );
-  }
-
-  return (
-    <Stack spacing={1} sx={{ pt: 1 }}>
-      {accounts.map((acc, idx) => (
-        <Box key={acc._id ?? idx}>
-          <Typography variant="body2">
-            <b>Source:</b> {acc.source ?? "-"}{" "}
-            <b style={{ marginLeft: 8 }}>Identifier:</b> {acc.identifier ?? "-"}
-          </Typography>
-          {acc.email && (
-            <Typography variant="body2">
-              <b>Email:</b> {acc.email}
-            </Typography>
-          )}
-          {idx < accounts.length - 1 && <Divider sx={{ mt: 1 }} />}
-        </Box>
-      ))}
-    </Stack>
-  );
-}
+import AccountsSection from "./AccountsSection";
+import ConnectAccountModal from "./ConnectAccountModal";
+import InputAdornment from "@mui/material/InputAdornment";
 
 export default function UserDisplay() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
-
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const apiParams = useMemo(() => ({ page, limit }), [page, limit]);
-  const { data, isPending, isFetching, isError, error } = useUsers(apiParams);
+  // Search state
+  const [searchInput, setSearchInput] = useState("");
+  const [activeSearch, setActiveSearch] = useState<string | null>(null);
 
-  const users: PopulatedUser[] = data?.data ?? [];
-  const totalPages = data?.totalPages ?? 1;
+  // Pagination query
+  const apiParams = useMemo(() => ({ page, limit }), [page, limit]);
+  const { data: paginatedData, isPending, isFetching, isError, error } = useUsers(apiParams);
+
+  const { data: searchResults, isLoading: isSearchLoading } = useSearchUsers(activeSearch);
+
+  const isSearchActive = !!activeSearch;
+
+  let displayUsers: PopulatedUser[] = [];
+  let totalPages = 1;
+
+  if (isSearchActive) {
+    displayUsers = searchResults ?? [];
+    totalPages = 1; 
+  } else {
+    displayUsers = paginatedData?.data ?? [];
+    totalPages = paginatedData?.totalPages ?? 1;
+  }
 
   const toggle = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  const handleSearch = () => {
+    if (!searchInput.trim()) {
+      return;
+    }
+    setActiveSearch(searchInput.trim());
+    setExpandedId(null);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setActiveSearch(null);
+    setExpandedId(null);
+    setPage(1);
+  };
+
+  const handleKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   return (
@@ -76,71 +88,111 @@ export default function UserDisplay() {
         alignItems: "center",
       }}
     >
-      <Box sx={{ display: "flex", gap: 15, alignItems: "center", mb: 3 }}>
+      {/* Search Section */}
+      <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 3 }}>
         <TextField
-          select
-          label="Search By"
+          label="Search Users"
           size="small"
-          defaultValue=""
-          sx={{ minWidth: 180 }}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={handleKeyPress}
+          placeholder="Search by name, identifier, or source..."
+          sx={{ minWidth: 350 }}
+          slotProps={{
+            input: {
+              endAdornment: activeSearch && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClearSearch}>
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
         />
-        <TextField label="Input" size="small" sx={{ minWidth: 160 }} />
+
+        <Button
+          variant="contained"
+          startIcon={<SearchIcon />}
+          onClick={handleSearch}
+          disabled={!searchInput.trim()}
+        >
+          Search
+        </Button>
+
+        {activeSearch && (
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleClearSearch}
+          >
+            Clear
+          </Button>
+        )}
       </Box>
 
+      {activeSearch && (
+        <Alert severity="info" sx={{ mb: 2, width: "80%" }}>
+          Showing results for: "<strong>{activeSearch}</strong>"
+        </Alert>
+      )}
+
       <Paper sx={{ width: "80%", p: 2 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 2,
-          }}
-        >
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Button
-              variant="outlined"
-              disabled={page <= 1 || isFetching}
-              onClick={() => {
-                setExpandedId(null);
-                setPage((p) => Math.max(1, p - 1));
-              }}
-            >
-              Prev
-            </Button>
-
-            <Typography variant="body2">
-              Page {page} / {totalPages} {isFetching ? "(Updating…)" : ""}
-            </Typography>
-
-            <Button
-              variant="outlined"
-              disabled={page >= totalPages || isFetching}
-              onClick={() => {
-                setExpandedId(null);
-                setPage((p) => Math.min(totalPages, p + 1));
-              }}
-            >
-              Next
-            </Button>
-          </Stack>
-
-          <TextField
-            select
-            label="Page size"
-            size="small"
-            value={limit}
-            onChange={(e) => {
-              setExpandedId(null);
-              setPage(1);
-              setLimit(Number(e.target.value));
+        {!isSearchActive && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
             }}
-            sx={{ width: 140 }}
           >
-            <MenuItem value={5}>5</MenuItem>
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={25}>25</MenuItem>
-          </TextField>
-        </Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Button
+                variant="outlined"
+                disabled={page <= 1 || isFetching}
+                onClick={() => {
+                  setExpandedId(null);
+                  setPage((p) => Math.max(1, p - 1));
+                }}
+              >
+                Prev
+              </Button>
+
+              <Typography variant="body2">
+                Page {page} / {totalPages} {isFetching ? "(Updating…)" : ""}
+              </Typography>
+
+              <Button
+                variant="outlined"
+                disabled={page >= totalPages || isFetching}
+                onClick={() => {
+                  setExpandedId(null);
+                  setPage((p) => Math.min(totalPages, p + 1));
+                }}
+              >
+                Next
+              </Button>
+            </Stack>
+
+            <TextField
+              select
+              label="Page size"
+              size="small"
+              value={limit}
+              onChange={(e) => {
+                setExpandedId(null);
+                setPage(1);
+                setLimit(Number(e.target.value));
+              }}
+              sx={{ width: 140 }}
+            >
+              <MenuItem value={5}>5</MenuItem>
+              <MenuItem value={10}>10</MenuItem>
+              <MenuItem value={25}>25</MenuItem>
+            </TextField>
+          </Box>
+        )}
 
         {isError && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -148,25 +200,25 @@ export default function UserDisplay() {
           </Alert>
         )}
 
-        {isPending ? (
+        {(isPending && !isSearchActive) || isSearchLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress />
           </Box>
         ) : (
           <Stack spacing={2}>
-            {users.map((u) => {
-              const id = String(u._id);
+            {displayUsers.map((user) => {
+              const id = String(user._id);
               const isOpen = expandedId === id;
 
-              const birth = u.birthDate
-                ? new Date(u.birthDate).toLocaleDateString()
+              const birth = user.birthDate
+                ? new Date(user.birthDate).toLocaleDateString()
                 : "-";
 
               return (
                 <Card key={id} variant="outlined">
                   <CardHeader
-                    title={`${u.firstName} ${u.lastName}`}
-                    subheader={`ID: ${u.identityCard} • Birth: ${birth} • Gender: ${u.gender}`}
+                    title={`${user.firstName} ${user.lastName}`}
+                    subheader={`ID: ${user.identityCard} • Birth: ${birth} • Gender: ${user.gender}`}
                     action={
                       <IconButton
                         onClick={() => toggle(id)}
@@ -182,17 +234,26 @@ export default function UserDisplay() {
                   />
                   <Collapse in={isOpen} timeout="auto" unmountOnExit>
                     <CardContent>
-                      <Typography variant="subtitle2">Accounts</Typography>
-                      <AccountsSection accounts={(u as any).accounts ?? []} />
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                        <Typography variant="subtitle2">Accounts</Typography>
+                        <ConnectAccountModal
+                          userId={user._id}
+                          userName={`${user.firstName} ${user.lastName}`}
+                        />
+                      </Box>
+                      <AccountsSection
+                        accounts={user.accounts}
+                        userId={user._id}
+                      />
                     </CardContent>
                   </Collapse>
                 </Card>
               );
             })}
 
-            {users.length === 0 && !isError && (
-              <Typography variant="body2" color="text.secondary">
-                No users found.
+            {displayUsers.length === 0 && !isError && (
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
+                {isSearchActive ? "No users found matching your search." : "No users found."}
               </Typography>
             )}
           </Stack>

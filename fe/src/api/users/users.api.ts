@@ -1,10 +1,19 @@
-import { Paginated, PopulatedUser, User } from "../../types/user.types";
-import { apiRequest } from "../http";
+import {
+  CreateInputUser,
+  Paginated,
+  PopulatedUser,
+  User,
+} from "../../types/user.types";
+import { apiClientWrite, apiRequestRead, apiRequestWrite } from "../http";
 
-export function getUsers(params: { page: number; limit: number; search?: string }) {
-  return apiRequest<Paginated<PopulatedUser>>({
+export function getUsers(params: {
+  page: number;
+  limit: number;
+  search?: string;
+}) {
+  return apiRequestRead<Paginated<PopulatedUser>>({
     method: "GET",
-    url: "/api/users",
+    url: "users",
     params: {
       page: params.page,
       limit: params.limit,
@@ -13,32 +22,34 @@ export function getUsers(params: { page: number; limit: number; search?: string 
   });
 }
 
-// export function getUserById(id: string) {
-//   return apiRequest<User>({
-//     method: "GET",
-//     url: `/api/users/${id}`,
-//   });
-// }
+export function disconnect(accountId: string, userId: string) {
+  return apiRequestWrite<void>({
+    method: "DELETE",
+    url: `users/disconnect/account/${accountId}/user/${userId}`,
+  });
+}
 
-// export function createUser(input: CreateUserInput) {
-//   return apiRequest<User>({
-//     method: "POST",
-//     url: "/api/users",
-//     data: input,
-//   });
-// }
+export function connect(accountId: string, userId: string) {
+  return apiRequestWrite<void>({
+    method: "PATCH",
+    url: `users/connect/account/${accountId}/user/${userId}`,
+  });
+}
 
-// export function updateUser(id: string, input: UpdateUserInput) {
-//   return apiRequest<User>({
-//     method: "PATCH",
-//     url: `/api/users/${id}`,
-//     data: input,
-//   });
-// }
+export function createUser(input: CreateInputUser) {
+  return apiRequestWrite<User>({
+    method: "POST",
+    url: "users",
+    data: input,
+  });
+}
 
-// export function deleteUser(id: string) {
-//   return apiRequest<{ success: true }>({
-//     method: "DELETE",
-//     url: `/api/users/${id}`,
-//   });
-// }
+export function searchUsers(query: string) {
+  if (!query) return [];
+
+  return apiRequestRead<PopulatedUser[]>({
+    method: "GET",
+    url: "/users/search",
+    params: { q: query },
+  });
+}

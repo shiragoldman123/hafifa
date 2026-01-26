@@ -12,14 +12,8 @@ const config = {
     usersCollectionName: env.get('USERS_COLLECTION_NAME').required().asString(),
     accountsCollectionName: env.get('ACCOUNTS_COLLECTION_NAME').required().asString(),
     isReplaceAll: env.get('IS_REPLACE_ALL').default('true').asBool(),
-    queries: {
-      personalNumberKeyName: env.get('PERSONAL_NUMBER_KEY_NAME').required().asString(),
-      identityCardKeyName: env.get('IDENTITY_CARD_KEY_NAME').required().asString(),
-      usernameKeyName: env.get('USERNAME_KEY_NAME').required().asString(),
-    },
   },
   source: {
-    getAllUrl: env.get('SOURCE_GET_ALL_URL').required().asUrlString(),
     timeout: env.get('SOURCE_TIMEOUT').default(10000).asIntPositive(),
   },
   metaData: {
@@ -27,6 +21,15 @@ const config = {
     serviceName: env.get('SERVICE_NAME').required().asString(),
     description: env.get('DESCRIPTION').required().asString(),
   },
+  rabbit: {
+    urls: [env.get('RABBIT_URLS').required().asUrlString()],
+    queue: env.get('RABBIT_QUEUE').required().asString(),
+    // TODO- write it in env file
+    queueOptions: {
+      durable: true,
+    },
+  },
+  
 };
 
 export default config;

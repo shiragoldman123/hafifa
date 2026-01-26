@@ -1,16 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, ObjectId } from 'mongoose';
 import config from '../config/env.config';
-import { User } from 'src/user/user.schema';
+import { UserWrite } from 'src/user/userWrite.schema';
 
-export type AccountDocument = Account & Document;
+export type AccountDocument = WriteAccount & Document;
 
 @Schema({
   collection: config.mongo.accountsCollectionName,
   versionKey: false,
 })
-export class Account {
-    @Prop({required: true})
+export class WriteAccount {
+    @Prop({required: true, unique: true})
     identifier: string
 
     @Prop({required: true})
@@ -19,8 +19,8 @@ export class Account {
     @Prop()
     email: string
 
-    @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Users' })
-    user: User | ObjectId
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Users' })
+    user: UserWrite | ObjectId
 }
 
-export const AccountSchema = SchemaFactory.createForClass(Account);
+export const AccountSchema = SchemaFactory.createForClass(WriteAccount);

@@ -1,99 +1,66 @@
-import { Injectable } from "@nestjs/common";
-import { UserRepository } from '../user/user.repository';
-import { CreateUserInputDto } from "./user.dto";
-import { User } from "./user.schema";
-import { Types } from "mongoose";
-import { AccountsRepository } from "src/account/account.repository";
+import { Injectable } from '@nestjs/common';
+import { UserWriteRepository } from './userWrite.repository';
+import { CreateUserInputDto } from './user.dto';
+import { Types } from 'mongoose';
+import { AccountService } from 'src/account/account.service';
+import { UserWrite } from './userWrite.schema';
+import { RabbitMQService } from 'src/rabbit/rabbitmq.service';
 
 @Injectable()
 export class UserService {
-    constructor(
-    private readonly usersRepository: UserRepository,
-    private readonly accountRepository: AccountsRepository,
+  constructor(
+    private readonly usersRepository: UserWriteRepository,
+    private readonly accountService: AccountService,
+    private readonly rabbitmq: RabbitMQService,
   ) {}
 
-  createUser(user: CreateUserInputDto): Promise<User> {
-    return this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user})
- } 
+  async createUser(user: CreateUserInputDto): Promise<UserWrite> {
+    const createdUser = await this.usersRepository.createUser({ fullName: `${user.firstName} ${user.lastName}`, ...user });
 
-  findUserByIdentityCard(identityCard: string): Promise<User> {
-    return this.usersRepository.findUserByIdentityCard(identityCard);
- }
- 
-  findUserByFullName(fullName: string) : Promise<User> {
-    return this.usersRepository.findUserByFullName(fullName);
- }
+    this.rabbitmq.publishMessageToQueue('user.created', createdUser);
 
-  async findUsersPaginated(page: number, limit: number) {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.max(1, Math.min(limit, 100)); 
-  const skip = (safePage - 1) * safeLimit;
+    return createdUser;
+  }
 
-  const { data, total } = await this.usersRepository.findUsersPaginated(skip, safeLimit);
+  async connect(accountId: string, userId: string) {
+    const accId = new Types.ObjectId(accountId);
+    const usrId = new Types.ObjectId(userId);
 
-  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+    await Promise.all([this.accountService.findAccountById(accountId), this.usersRepository.findUserById(usrId)]);
 
-  return {
-    data,
-    page: safePage,
-    limit: safeLimit,
-    total,
-    totalPages,
-  };
-}
-
-
-  findUserByAccount(accountId: string): Promise<User> {
-    const objId = new Types.ObjectId(accountId);
-    return this.usersRepository.findUserByAccount(objId);
- }
-
-  findUsersWithSource(source: string): Promise<User[]> {
-    return this.accountRepository.findUsersBySource(source)
- }
-
- async connect(accountId: string, userId: string) {
-  const accId = new Types.ObjectId(accountId);
-  const usrId = new Types.ObjectId(userId);
-
-  await Promise.all([
-    this.accountRepository.findAccountById(accId),
-    this.usersRepository.findUserById(usrId),
-  ]);
-
-  try {
-    await this.usersRepository.connectAccountToUser(accId, usrId);
-    await this.accountRepository.connectUserToAccount(accId, usrId);
-
-    return { ok: true };
-  } catch (err) {
     try {
-      await Promise.allSettled([
-        this.usersRepository.disconnectAccountToUser(accId, usrId),
-        this.accountRepository.disconnectUserToAccount(accId),
-      ]);
-    } catch (_) {
+      await this.usersRepository.connectAccountToUser(accId, usrId);
+      await this.accountService.connectUserToAccount(accountId, userId);
+
+      this.rabbitmq.publishMessageToQueue('user.account.connected', { accountId, userId });
+
+      return { ok: true };
+    } catch (err) {
+      try {
+        await Promise.allSettled([
+          this.usersRepository.disconnectAccountToUser(accId, usrId),
+          this.accountService.disconnectUserToAccount(accountId),
+        ]);
+      } catch (_) {}
+      throw err;
     }
-    throw err;
   }
-}
 
-async disconnect(accountId: string, userId: string) {
-  const accId = new Types.ObjectId(accountId);
-  const usrId = new Types.ObjectId(userId);
+  async disconnect(accountId: string, userId: string) {
+    const accId = new Types.ObjectId(accountId);
+    const usrId = new Types.ObjectId(userId);
 
-  await Promise.all([
-    this.accountRepository.findAccountById(accId),
-    this.usersRepository.findUserById(usrId),
-  ]);
+    await Promise.all([this.accountService.findAccountById(accountId), this.usersRepository.findUserById(usrId)]);
 
-  try {
-    await this.usersRepository.disconnectAccountToUser(accId, usrId);
-    await this.accountRepository.disconnectUserToAccount(accId);
-    return { ok: true };
-  } catch (err) {
-    throw err;
+    try {
+      await this.usersRepository.disconnectAccountToUser(accId, usrId);
+      await this.accountService.disconnectUserToAccount(accountId);
+
+      this.rabbitmq.publishMessageToQueue('user.account.disconnected', { accountId, userId });
+
+      return { ok: true };
+    } catch (err) {
+      throw err;
+    }
   }
-}
-
 }

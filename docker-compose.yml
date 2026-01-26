@@ -1,0 +1,147 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: userly-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - userly-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: userly-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    
+      - "15672:15672"  
+    networks:
+      - userly-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: userly-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - userly-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    container_name: userly-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - MONGO_URI=${MONGO_URI}
+      - USERS_COLLECTION_NAME=Users
+      - ACCOUNTS_COLLECTION_NAME=Accounts
+      - UPDATE_CRON=0 0 12 * * *
+      - NODE_ENV=production
+      - SYSTEM_NAME=userly
+      - SERVICE_NAME=userly-write
+      - DESCRIPTION=tracking user data
+      - SOURCE_TIMEOUT=10000
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200  
+      - RABBIT_URLS=amqp://rabbitmq:5672
+      - RABBIT_QUEUE=events_queue
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:  
+        condition: service_healthy
+    networks:
+      - userly-network
+
+  read-backend:
+    build:
+      context: ./read-be
+      dockerfile: Dockerfile
+    container_name: userly-read-backend
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=${MONGO_URI}
+      - USERS_VIEW_COLLECTION_NAME=users_view
+      - ACCOUNTS_VIEW_COLLECTION_NAME=accounts_view
+      - UPDATE_CRON=0 0 12 * * *
+      - NODE_ENV=production
+      - SYSTEM_NAME=userly
+      - SERVICE_NAME=userly-read
+      - DESCRIPTION=tracking user data
+      - SOURCE_TIMEOUT=10000
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBIT_URLS=amqp://rabbitmq:5672
+      - RABBIT_QUEUE=events_queue
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200  
+      - SHRAGA_URL=https://shraga.shraga.branch-yesodot.org
+      - SHRAGA_CALLBACK_URL=http://localhost:3002/api/auth/callback
+      - FRONTEND_URL=http://localhost:5173
+      - SHRAGA_COOKIE_NAME=access_token
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch: 
+        condition: service_healthy
+    networks:
+      - userly-network
+
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3002/api
+    container_name: userly-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - read-backend
+    networks:
+      - userly-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  elasticsearch_data:  
+    driver: local
+
+networks:
+  userly-network:
+    driver: bridge

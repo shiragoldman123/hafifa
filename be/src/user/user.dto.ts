@@ -1,12 +1,7 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsDate,
-  IsEnum,
-  Length,
-  Matches,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsDate, IsEnum, Length, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
+import mongoose, { ObjectId } from 'mongoose';
+import { WriteAccount } from 'src/account/account.schema';
 
 export enum Gender {
   Male = 'male',
@@ -39,4 +34,15 @@ export class CreateUserInputDto {
 
 export class CreateUserDto extends CreateUserInputDto {
   fullName: string;
+}
+
+export class ExternalUser {
+  _id: ObjectId;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  identityCard: string;
+  birthDate: Date;
+  gender: string;
+  accounts: (mongoose.Schema.Types.ObjectId | WriteAccount)[];
 }
