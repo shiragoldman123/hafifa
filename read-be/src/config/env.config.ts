@@ -31,7 +31,14 @@ const config = {
   },
   elasticSearch : {
     node: env.get('ELASTICSEARCH_NODE').required().asString()
-  }
+  },
+    shraga: {
+    url: env.get('SHRAGA_URL').required().asString(),
+    secret: env.get('SHRAGA_SECRET').default('secret').asString(),
+    callbackUrl: env.get('SHRAGA_CALLBACK_URL').required().asString(),
+    cookieName: env.get('SHRAGA_COOKIE_NAME').default('access_token').asString(),
+    frontendUrl: env.get('FRONTEND_URL').required().asString(),
+  },
 };
 
 export default config;

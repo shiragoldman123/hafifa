@@ -107,6 +107,10 @@ services:
       - RABBIT_URLS=amqp://rabbitmq:5672
       - RABBIT_QUEUE=events_queue
       - ELASTICSEARCH_NODE=http://elasticsearch:9200  
+      - SHRAGA_URL=https://shraga.shraga.branch-yesodot.org
+      - SHRAGA_CALLBACK_URL=http://localhost:3002/api/auth/callback
+      - FRONTEND_URL=http://localhost:5173
+      - SHRAGA_COOKIE_NAME=access_token
     depends_on:
       mongodb:
         condition: service_healthy
